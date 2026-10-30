@@ -343,7 +343,7 @@
     window.projectOrders = loadData('orders', []);
     window.blockedUsers = loadData('blocked', []);
 
-    // Автоматическое обновление данных при изменениях в localStorage из других вкладок/окон
+    // Автоматическое обновление данных при изменениях в localStorage в реальном времени
     window.addEventListener('storage', (event) => {
       if (event.key === 'progvision_orders') {
         window.projectOrders = event.newValue ? JSON.parse(event.newValue) : [];
