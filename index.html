@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="t-title">ProgVision — IT-студия и Веб-разработка</title>
+  <title>ProgVision — IT-студия и Веб-разработка</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -38,6 +38,15 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
+    // Автоматическое восстановление сессии при F5
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (typeof window.handleUserAuth === 'function') {
+          window.handleUserAuth(user);
+        }
+      }
+    });
+
     window.firebaseAuth = { auth, provider, signInWithPopup, signOut, onAuthStateChanged };
   </script>
 
@@ -46,6 +55,8 @@
     .glass { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
     .glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.35); }
     .gradient-text { background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .page-section { display: none; }
+    .page-section.active { display: block; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-black">
@@ -53,29 +64,22 @@
   <!-- Шапка сайта -->
   <header class="fixed top-0 left-0 w-full z-50 glass">
     <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-      <div class="flex items-center gap-3 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchPage('hero')">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center font-bold text-xl shadow-lg">PV</div>
         <span class="text-2xl font-black tracking-wider gradient-text">ProgVision</span>
       </div>
 
-      <!-- Десктоп Меню -->
+      <!-- Меню (SPA переключение) -->
       <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-        <a href="#services" class="hover:text-cyan-400 transition" data-i18n="navServices">Услуги</a>
-        <a href="#portfolio" class="hover:text-cyan-400 transition" data-i18n="navPortfolio">Портфолио</a>
-        <a href="#about" class="hover:text-cyan-400 transition" data-i18n="navAbout">О нас</a>
-        <a href="#calculator" class="hover:text-cyan-400 transition" data-i18n="navCalc">Калькулятор</a>
-        <a href="#contacts" class="hover:text-cyan-400 transition" data-i18n="navContacts">Контакты</a>
+        <button onclick="switchPage('services')" class="hover:text-cyan-400 transition">Услуги</button>
+        <button onclick="switchPage('portfolio')" class="hover:text-cyan-400 transition">Портфолио</button>
+        <button onclick="switchPage('about')" class="hover:text-cyan-400 transition">О нас</button>
+        <button onclick="switchPage('calculator')" class="hover:text-cyan-400 transition">Калькулятор</button>
+        <button onclick="switchPage('contacts')" class="hover:text-cyan-400 transition">Контакты</button>
       </nav>
 
       <div class="flex items-center gap-3">
-        <!-- Переключатель Языков -->
-        <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-gray-800 text-xs px-2 py-1 rounded border border-gray-700 text-cyan-400">
-          <option value="ru">RU</option>
-          <option value="en">EN</option>
-          <option value="tj">TJ</option>
-        </select>
-
-        <!-- Переключатель Валют -->
+        <!-- Валюты -->
         <select id="currencySelect" onchange="changeCurrency(this.value)" class="bg-gray-800 text-xs px-2 py-1 rounded border border-gray-700 text-green-400">
           <option value="USD">$ USD</option>
           <option value="TJS">сом TJS</option>
@@ -83,9 +87,15 @@
           <option value="EUR">€ EUR</option>
         </select>
 
+        <!-- Корзина Клиента -->
+        <button onclick="openClientCart()" class="relative p-2 bg-gray-800/80 rounded-xl hover:bg-gray-700 transition text-cyan-400" title="Мои заявки">
+          <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+          <span id="cartBadge" class="absolute -top-1 -right-1 bg-cyan-500 text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+        </button>
+
         <div id="authContainer" class="hidden sm:block">
           <button onclick="loginGoogle()" class="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-lg">
-            <i data-lucide="log-in" class="w-4 h-4"></i> <span data-i18n="loginBtn">Войти</span>
+            <i data-lucide="log-in" class="w-4 h-4"></i> Войти
           </button>
         </div>
 
@@ -97,11 +107,11 @@
 
     <!-- Мобильное меню -->
     <div id="mobileMenu" class="hidden md:hidden glass border-t border-gray-800 px-4 py-4 space-y-3">
-      <a href="#services" onclick="toggleMobileMenu()" class="block text-sm text-gray-300 hover:text-cyan-400" data-i18n="navServices">Услуги</a>
-      <a href="#portfolio" onclick="toggleMobileMenu()" class="block text-sm text-gray-300 hover:text-cyan-400" data-i18n="navPortfolio">Портфолио</a>
-      <a href="#about" onclick="toggleMobileMenu()" class="block text-sm text-gray-300 hover:text-cyan-400" data-i18n="navAbout">О нас</a>
-      <a href="#calculator" onclick="toggleMobileMenu()" class="block text-sm text-gray-300 hover:text-cyan-400" data-i18n="navCalc">Калькулятор</a>
-      <a href="#contacts" onclick="toggleMobileMenu()" class="block text-sm text-gray-300 hover:text-cyan-400" data-i18n="navContacts">Контакты</a>
+      <button onclick="switchPage('services'); toggleMobileMenu();" class="block w-full text-left text-sm text-gray-300 hover:text-cyan-400">Услуги</button>
+      <button onclick="switchPage('portfolio'); toggleMobileMenu();" class="block w-full text-left text-sm text-gray-300 hover:text-cyan-400">Портфолио</button>
+      <button onclick="switchPage('about'); toggleMobileMenu();" class="block w-full text-left text-sm text-gray-300 hover:text-cyan-400">О нас</button>
+      <button onclick="switchPage('calculator'); toggleMobileMenu();" class="block w-full text-left text-sm text-gray-300 hover:text-cyan-400">Калькулятор</button>
+      <button onclick="switchPage('contacts'); toggleMobileMenu();" class="block w-full text-left text-sm text-gray-300 hover:text-cyan-400">Контакты</button>
       <div id="authContainerMobile" class="pt-2 border-t border-gray-800">
         <button onclick="loginGoogle()" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg">
           <i data-lucide="log-in" class="w-4 h-4"></i> Войти через Google
@@ -110,156 +120,128 @@
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section id="hero" class="relative pt-32 pb-20 min-h-screen flex items-center justify-center overflow-hidden">
+  <!-- СТРАНИЦА 1: Главная (Hero) -->
+  <section id="page-hero" class="page-section active relative pt-32 pb-20 min-h-screen flex items-center justify-center overflow-hidden">
     <div id="canvas3d" class="absolute inset-0 z-0 opacity-40 pointer-events-none"></div>
     <div class="relative z-10 max-w-4xl mx-auto text-center px-4">
-      <span class="text-xs uppercase tracking-widest text-cyan-400 font-semibold px-3 py-1 bg-cyan-950/60 rounded-full border border-cyan-800/50" data-i18n="heroBadge">Digital & Web Solutions</span>
-      <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold mt-6 leading-tight" data-i18n="heroTitle">
-        Создаем масштабные веб-системы будущего
+      <span class="text-xs uppercase tracking-widest text-cyan-400 font-semibold px-3 py-1 bg-cyan-950/60 rounded-full border border-cyan-800/50">Digital & Web Solutions</span>
+      <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold mt-6 leading-tight">
+        Создаем масштабные <br><span class="gradient-text">веб-системы будущего</span>
       </h1>
-      <p class="mt-6 text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto" data-i18n="heroSubtitle">
+      <p class="mt-6 text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto">
         Разработка высоконагруженных веб-сервисов, интернет-магазинов и корпоративных порталов с индивидуальным дизайном.
       </p>
       <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-        <a href="#calculator" class="bg-cyan-500 hover:bg-cyan-400 text-black px-8 py-4 rounded-xl font-bold transition shadow-lg glow-cyan text-center" data-i18n="btnCalc">Рассчитать проект</a>
-        <a href="#portfolio" class="glass px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition text-center" data-i18n="btnPortfolio">Смотреть работы</a>
+        <button onclick="switchPage('calculator')" class="bg-cyan-500 hover:bg-cyan-400 text-black px-8 py-4 rounded-xl font-bold transition shadow-lg glow-cyan">Рассчитать проект</button>
+        <button onclick="switchPage('portfolio')" class="glass px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition">Смотреть работы</button>
       </div>
     </div>
   </section>
 
-  <!-- Услуги (Цены синхронизированы с админкой) -->
-  <section id="services" class="py-20 max-w-7xl mx-auto px-4">
-    <h2 class="text-3xl font-bold text-center mb-12" data-i18n="servicesTitle">Наши Услуги</h2>
+  <!-- СТРАНИЦА 2: Услуги -->
+  <section id="page-services" class="page-section pt-32 pb-20 max-w-7xl mx-auto px-4 min-h-screen">
+    <h2 class="text-3xl font-bold text-center mb-12">Наши Услуги</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
-      <div class="glass p-6 rounded-2xl border border-gray-800 hover:border-cyan-500/50 transition">
+      <div class="glass p-6 rounded-2xl border border-gray-800">
         <div class="w-12 h-12 bg-cyan-500/10 text-cyan-400 rounded-xl flex items-center justify-center mb-4"><i data-lucide="globe"></i></div>
-        <h3 class="text-xl font-bold mb-2" data-i18n="serv1Title">Веб-Разработка</h3>
-        <p class="text-gray-400 text-sm mb-4" data-i18n="serv1Desc">Создание сайтов любой сложности: Landing Page, корпоративные порталы и SaaS-платформы.</p>
+        <h3 class="text-xl font-bold mb-2">Веб-Разработка</h3>
+        <p class="text-gray-400 text-sm mb-4">Создание сайтов любой сложности: Landing Page, корпоративные порталы и SaaS-платформы.</p>
         <span class="text-cyan-400 font-bold text-sm" id="priceTagLanding">от $500</span>
       </div>
-      <div class="glass p-6 rounded-2xl border border-gray-800 hover:border-cyan-500/50 transition">
+      <div class="glass p-6 rounded-2xl border border-gray-800">
         <div class="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center mb-4"><i data-lucide="smartphone"></i></div>
-        <h3 class="text-xl font-bold mb-2" data-i18n="serv2Title">Корпоративные Сайты</h3>
-        <p class="text-gray-400 text-sm mb-4" data-i18n="serv2Desc">Масштабные порталы для бизнеса с уникальной архитектурой и админ-панелью.</p>
+        <h3 class="text-xl font-bold mb-2">Корпоративные Сайты</h3>
+        <p class="text-gray-400 text-sm mb-4">Масштабные порталы для бизнеса с уникальной архитектурой и админ-панелью.</p>
         <span class="text-cyan-400 font-bold text-sm" id="priceTagCorp">от $1200</span>
       </div>
-      <div class="glass p-6 rounded-2xl border border-gray-800 hover:border-cyan-500/50 transition sm:col-span-2 md:col-span-1">
+      <div class="glass p-6 rounded-2xl border border-gray-800">
         <div class="w-12 h-12 bg-purple-500/10 text-purple-400 rounded-xl flex items-center justify-center mb-4"><i data-lucide="layout"></i></div>
-        <h3 class="text-xl font-bold mb-2" data-i18n="serv3Title">E-Commerce & SaaS</h3>
-        <p class="text-gray-400 text-sm mb-4" data-i18n="serv3Desc">Интернет-магазины с платежными шлюзами и сложные облачные веб-системы.</p>
+        <h3 class="text-xl font-bold mb-2">E-Commerce & SaaS</h3>
+        <p class="text-gray-400 text-sm mb-4">Интернет-магазины с платежными шлюзами и сложные облачные веб-системы.</p>
         <span class="text-cyan-400 font-bold text-sm" id="priceTagEcom">от $2500</span>
       </div>
     </div>
   </section>
 
-  <!-- Портфолио -->
-  <section id="portfolio" class="py-20 max-w-7xl mx-auto px-4">
-    <h2 class="text-3xl font-bold text-center mb-4" data-i18n="portfolioTitle">Наши Работы</h2>
-    <p class="text-gray-400 text-center max-w-xl mx-auto mb-12 text-sm" data-i18n="portfolioSubtitle">Проекты, разработанные нашей командой для бизнеса и стартапов</p>
-    <div id="portfolioGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
-      <!-- Динамическое портфолио -->
+  <!-- СТРАНИЦА 3: Портфолио -->
+  <section id="page-portfolio" class="page-section pt-32 pb-20 max-w-7xl mx-auto px-4 min-h-screen">
+    <h2 class="text-3xl font-bold text-center mb-4">Наши Работы</h2>
+    <p class="text-gray-400 text-center max-w-xl mx-auto mb-12 text-sm">Проекты, разработанные нашей командой для бизнеса и стартапов</p>
+    <div id="portfolioGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8"></div>
+  </section>
+
+  <!-- СТРАНИЦА 4: О нас -->
+  <section id="page-about" class="page-section pt-32 pb-20 max-w-7xl mx-auto px-4 min-h-screen">
+    <h2 class="text-3xl font-bold text-center mb-4">О Нас и Нашей Команде</h2>
+    <p class="text-gray-400 text-center max-w-xl mx-auto mb-12 text-sm">Опытные программисты и дизайнеры ProgVision, создающие продукты мирового уровня</p>
+    
+    <div id="teamGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-16"></div>
+
+    <div class="max-w-3xl mx-auto glass p-6 sm:p-8 rounded-3xl border border-cyan-500/30">
+      <div class="text-center mb-8">
+        <span class="text-xs uppercase tracking-widest text-cyan-400 font-semibold px-3 py-1 bg-cyan-950/60 rounded-full border border-cyan-800">Карьера в ProgVision</span>
+        <h3 class="text-2xl font-bold mt-4">Хочешь работать в нашей команде?</h3>
+      </div>
+      <form id="joinTeamForm" onsubmit="submitTeamApplication(event)" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <input type="text" id="applicantName" required placeholder="Ваше Имя *" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm outline-none">
+          <input type="text" id="applicantRole" required placeholder="Кем хотите работать? *" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm outline-none">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <input type="text" id="applicantContact" required placeholder="Телефон / Telegram *" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm outline-none">
+          <input type="url" id="applicantLink" placeholder="Ссылка на GitHub / Портфолио" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm outline-none">
+        </div>
+        <textarea id="applicantDesc" rows="3" placeholder="О себе..." class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm outline-none"></textarea>
+        <button type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold py-3.5 rounded-xl glow-cyan">Отправить заявку в команду</button>
+      </form>
     </div>
   </section>
 
-  <!-- О нас и Команда -->
-  <section id="about" class="py-20 bg-gray-900/30 border-y border-gray-800">
-    <div class="max-w-7xl mx-auto px-4">
-      <h2 class="text-3xl font-bold text-center mb-4" data-i18n="aboutTitle">О Нас и Нашей Команде</h2>
-      <p class="text-gray-400 text-center max-w-xl mx-auto mb-12 text-sm" data-i18n="aboutSubtitle">Опытные программисты и дизайнеры ProgVision, создающие продукты мирового уровня</p>
-      
-      <div id="teamGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-16">
-        <!-- Команда -->
+  <!-- СТРАНИЦА 5: Калькулятор -->
+  <section id="page-calculator" class="page-section pt-32 pb-20 max-w-4xl mx-auto px-4 min-h-screen">
+    <h2 class="text-3xl font-bold text-center mb-8">Калькулятор Стоимости Проекта</h2>
+    <div class="glass p-6 sm:p-8 rounded-3xl space-y-6">
+      <div>
+        <label class="block text-sm font-semibold mb-2">Тип проекта:</label>
+        <select id="calcType" onchange="recalculateCost()" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm"></select>
       </div>
-
-      <!-- Форма заявки в команду -->
-      <div class="max-w-3xl mx-auto glass p-6 sm:p-8 rounded-3xl border border-cyan-500/30">
-        <div class="text-center mb-8">
-          <span class="text-xs uppercase tracking-widest text-cyan-400 font-semibold px-3 py-1 bg-cyan-950/60 rounded-full border border-cyan-800">Карьера в ProgVision</span>
-          <h3 class="text-2xl font-bold mt-4">Хочешь работать в нашей команде?</h3>
-          <p class="text-gray-400 text-sm mt-2">Заполни форму ниже, и мы свяжемся с тобой для обсуждения вакансии!</p>
+      <div>
+        <label class="block text-sm font-semibold mb-2">Дополнительные опции:</label>
+        <div id="calcOptionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm"></div>
+      </div>
+      <div class="pt-2">
+        <label class="block text-sm font-semibold mb-2">Промокод:</label>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input type="text" id="promoInput" placeholder="PROG10" class="bg-gray-800 border border-gray-700 p-3 rounded-xl flex-1 uppercase text-sm font-mono">
+          <button onclick="applyPromo()" class="bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold text-sm">Применить</button>
         </div>
-
-        <form id="joinTeamForm" onsubmit="submitTeamApplication(event)" class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Ваше Имя *</label>
-              <input type="text" id="applicantName" required placeholder="Например: Алишер" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm focus:border-cyan-400 outline-none">
-            </div>
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Кем хотите работать? *</label>
-              <input type="text" id="applicantRole" required placeholder="Frontend, Backend, UI/UX..." class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm focus:border-cyan-400 outline-none">
-            </div>
+        <div id="promoMsg" class="text-xs mt-2 hidden"></div>
+      </div>
+      <div class="pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <span class="text-gray-400 text-sm">Итоговая стоимость:</span>
+          <div class="flex items-baseline gap-3">
+            <div id="totalPrice" class="text-2xl sm:text-3xl font-extrabold text-cyan-400">$500</div>
+            <div id="oldPrice" class="text-base text-gray-500 line-through hidden"></div>
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Телефон / Telegram *</label>
-              <input type="text" id="applicantContact" required placeholder="+992... / @username" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm focus:border-cyan-400 outline-none">
-            </div>
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Ссылка на GitHub / Портфолио</label>
-              <input type="url" id="applicantLink" placeholder="https://github.com/..." class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm focus:border-cyan-400 outline-none">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs text-gray-400 mb-1">О себе и вашем опыте</label>
-            <textarea id="applicantDesc" rows="3" placeholder="Расскажите немного о своих навыках..." class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm focus:border-cyan-400 outline-none"></textarea>
-          </div>
-
-          <button type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition glow-cyan">
-            Отправить заявку в команду
-          </button>
-        </form>
+        </div>
+        <button onclick="submitProjectOrder()" class="bg-cyan-500 text-black px-6 py-3 rounded-xl font-bold w-full sm:w-auto text-center">Отправить заявку</button>
       </div>
     </div>
   </section>
 
-  <!-- Калькулятор -->
-  <section id="calculator" class="py-20 border-b border-gray-800">
-    <div class="max-w-4xl mx-auto px-4">
-      <h2 class="text-3xl font-bold text-center mb-8" data-i18n="calcTitle">Калькулятор Стоимости Проекта</h2>
-      <div class="glass p-6 sm:p-8 rounded-3xl space-y-6">
-        <div>
-          <label class="block text-sm font-semibold mb-2">Тип проекта:</label>
-          <select id="calcType" onchange="recalculateCost()" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm">
-            <!-- Динамически -->
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold mb-2">Дополнительные опции:</label>
-          <div id="calcOptionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <!-- Динамически -->
-          </div>
-        </div>
-
-        <div class="pt-2">
-          <label class="block text-sm font-semibold mb-2">Промокод на скидку:</label>
-          <div class="flex flex-col sm:flex-row gap-3">
-            <input type="text" id="promoInput" placeholder="Введите промокод (например, PROG10)" class="bg-gray-800 border border-gray-700 p-3 rounded-xl flex-1 uppercase text-sm font-mono">
-            <button onclick="applyPromo()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-xl font-semibold text-sm transition">Применить</button>
-          </div>
-          <div id="promoMsg" class="text-xs mt-2 hidden"></div>
-        </div>
-
-        <div class="pt-4 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <span class="text-gray-400 text-sm">Итоговая стоимость:</span>
-            <div class="flex items-baseline gap-3">
-              <div id="totalPrice" class="text-2xl sm:text-3xl font-extrabold text-cyan-400">$500</div>
-              <div id="oldPrice" class="text-base text-gray-500 line-through hidden"></div>
-            </div>
-          </div>
-          <button onclick="alert('Заявка успешно отправлена!')" class="bg-cyan-500 text-black px-6 py-3 rounded-xl font-bold hover:bg-cyan-400 transition w-full sm:w-auto text-center">Отправить заявку</button>
-        </div>
-      </div>
+  <!-- СТРАНИЦА 6: Контакты -->
+  <section id="page-contacts" class="page-section pt-32 pb-20 max-w-4xl mx-auto px-4 min-h-screen text-center">
+    <h2 class="text-3xl font-bold mb-6">Контакты ProgVision</h2>
+    <div class="glass p-8 rounded-3xl space-y-4 max-w-xl mx-auto">
+      <p class="text-gray-300">Свяжитесь с нами удобным для вас способом:</p>
+      <div class="text-cyan-400 font-bold text-lg">Email: info@progvision.tj</div>
+      <div class="text-gray-400 text-sm">Телефон / Telegram: +992 (90) 000-00-00</div>
     </div>
   </section>
 
   <!-- Подвал -->
-  <footer id="contacts" class="mt-auto py-12 glass">
+  <footer class="mt-auto py-12 glass">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-6 text-center sm:text-left">
       <div>
         <div class="flex items-center justify-center sm:justify-start gap-2">
@@ -274,29 +256,34 @@
     </div>
   </footer>
 
-  <!-- Модальное окно Админ-Панели -->
+  <!-- Модальное окно: Корзина / Заявки Клиента -->
+  <div id="clientCartModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass w-full max-w-lg rounded-3xl p-6 border border-cyan-500/30 max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-800">
+        <h3 class="text-xl font-bold text-cyan-400 flex items-center gap-2"><i data-lucide="shopping-bag"></i> Мои отправленные заявки</h3>
+        <button onclick="closeClientCart()" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+      </div>
+      <div id="clientCartContent" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Админ-Панель -->
   <div id="adminModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
     <div class="glass w-full max-w-5xl rounded-3xl p-4 sm:p-6 border border-cyan-500/30 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-800">
-        <h3 class="text-xl sm:text-2xl font-bold text-cyan-400 flex items-center gap-2">
-          <i data-lucide="shield-check"></i> Панель Администратора
-        </h3>
+        <h3 class="text-xl sm:text-2xl font-bold text-cyan-400 flex items-center gap-2"><i data-lucide="shield-check"></i> Панель Администратора</h3>
         <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="flex flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
-          <button onclick="showAdminTab('languages')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/20 text-left font-semibold text-cyan-400 flex items-center gap-2"><i data-lucide="languages" class="w-4 h-4"></i> Языки</button>
-          <button onclick="showAdminTab('prices')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/20 text-left font-semibold flex items-center gap-2"><i data-lucide="dollar-sign" class="w-4 h-4"></i> Цены</button>
-          <button onclick="showAdminTab('portfolio')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/20 text-left font-semibold flex items-center gap-2"><i data-lucide="briefcase" class="w-4 h-4"></i> Портфолио</button>
-          <button onclick="showAdminTab('team')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/20 text-left font-semibold flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Команда</button>
-          <button onclick="showAdminTab('applications')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/20 text-left font-semibold flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> Заявки</button>
-          <button onclick="showAdminTab('promos')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/20 text-left font-semibold flex items-center gap-2"><i data-lucide="tag" class="w-4 h-4"></i> Промокоды</button>
-          <button onclick="showAdminTab('rates')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/20 text-left font-semibold flex items-center gap-2"><i data-lucide="coins" class="w-4 h-4"></i> Курсы Валют</button>
+          <button onclick="showAdminTab('allOrders')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold text-cyan-400 flex items-center gap-2"><i data-lucide="clipboard-list" class="w-4 h-4"></i> Заявки и Блокировка</button>
+          <button onclick="showAdminTab('prices')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2"><i data-lucide="dollar-sign" class="w-4 h-4"></i> Цены</button>
+          <button onclick="showAdminTab('portfolio')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2"><i data-lucide="briefcase" class="w-4 h-4"></i> Портфолио</button>
+          <button onclick="showAdminTab('team')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Команда</button>
+          <button onclick="showAdminTab('promos')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2"><i data-lucide="tag" class="w-4 h-4"></i> Промокоды</button>
         </div>
-        <div id="adminContent" class="md:col-span-3 bg-gray-900/60 p-4 rounded-2xl border border-gray-800 min-h-[300px]">
-          <!-- Контент админки -->
-        </div>
+        <div id="adminContent" class="md:col-span-3 bg-gray-900/60 p-4 rounded-2xl border border-gray-800 min-h-[300px]"></div>
       </div>
     </div>
   </div>
@@ -304,136 +291,194 @@
   <script>
     lucide.createIcons();
 
+    function switchPage(pageId) {
+      document.querySelectorAll('.page-section').forEach(el => {
+        el.classList.remove('active');
+      });
+      const target = document.getElementById('page-' + pageId);
+      if (target) {
+        target.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
     function toggleMobileMenu() {
       document.getElementById('mobileMenu').classList.toggle('hidden');
     }
 
-    // Системы мультиязычности
-    window.currentLang = "ru";
-    window.translations = {
-      ru: {
-        navServices: "Услуги",
-        navPortfolio: "Портфолио",
-        navAbout: "О нас",
-        navCalc: "Калькулятор",
-        navContacts: "Контакты",
-        loginBtn: "Войти",
-        heroBadge: "Digital & Web Solutions",
-        heroTitle: "Создаем масштабные веб-системы будущего",
-        heroSubtitle: "Разработка высоконагруженных веб-сервисов, интернет-магазинов и корпоративных порталов с индивидуальным дизайном.",
-        btnCalc: "Рассчитать проект",
-        btnPortfolio: "Смотреть работы",
-        servicesTitle: "Наши Услуги",
-        serv1Title: "Веб-Разработка",
-        serv1Desc: "Создание сайтов любой сложности: Landing Page, корпоративные порталы и SaaS-платформы.",
-        serv2Title: "Корпоративные Сайты",
-        serv2Desc: "Масштабные порталы для бизнеса с уникальной архитектурой и админ-панелью.",
-        serv3Title: "E-Commerce & SaaS",
-        serv3Desc: "Интернет-магазины с платежными шлюзами и сложные облачные веб-системы.",
-        portfolioTitle: "Наши Работы",
-        portfolioSubtitle: "Проекты, разработанные нашей командой для бизнеса и стартапов",
-        aboutTitle: "О Нас и Нашей Команде",
-        aboutSubtitle: "Опытные программисты и дизайнеры ProgVision, создающие продукты мирового уровня",
-        calcTitle: "Калькулятор Стоимости Проекта"
-      },
-      en: {
-        navServices: "Services",
-        navPortfolio: "Portfolio",
-        navAbout: "About Us",
-        navCalc: "Calculator",
-        navContacts: "Contacts",
-        loginBtn: "Login",
-        heroBadge: "Digital & Web Solutions",
-        heroTitle: "Building Large-Scale Web Systems of the Future",
-        heroSubtitle: "High-load web services, e-commerce stores, and corporate portals with custom design.",
-        btnCalc: "Calculate Project",
-        btnPortfolio: "View Work",
-        servicesTitle: "Our Services",
-        serv1Title: "Web Development",
-        serv1Desc: "Custom websites of any complexity: Landing Pages, corporate portals, and SaaS platforms.",
-        serv2Title: "Corporate Sites",
-        serv2Desc: "Large business portals with unique architecture and custom admin panels.",
-        serv3Title: "E-Commerce & SaaS",
-        serv3Desc: "Online stores with payment gateways and complex cloud web systems.",
-        portfolioTitle: "Our Projects",
-        portfolioSubtitle: "Projects developed by our team for businesses and startups",
-        aboutTitle: "About Us & Our Team",
-        aboutSubtitle: "Experienced ProgVision developers and designers building world-class products",
-        calcTitle: "Project Cost Calculator"
-      },
-      tj: {
-        navServices: "Хизматрасониҳо",
-        navPortfolio: "Портфолио",
-        navAbout: "Дар бораи мо",
-        navCalc: "Ҳисобкунак",
-        navContacts: "Тамос",
-        loginBtn: "Даромад",
-        heroBadge: "Digital & Web Solutions",
-        heroTitle: "Сохтани системаҳои бузурги веби оянда",
-        heroSubtitle: "Таҳияи хизматрасониҳои вебии сербор, мағозаҳои онлайн ва порталҳои корпоративӣ.",
-        btnCalc: "Ҳисоби лоиҳа",
-        btnPortfolio: "Дидани корҳо",
-        servicesTitle: "Хизматрасониҳои мо",
-        serv1Title: "Таҳияи Веб",
-        serv1Desc: "Сохтани сомонаҳои дилхоҳ мураккабӣ: Landing Page, порталҳои корпоративӣ ва платформаҳо.",
-        serv2Title: "Сомонаҳои Корпоративӣ",
-        serv2Desc: "Порталҳои калон барои бизнес бо меъмории беназир ва панели идоракунӣ.",
-        serv3Title: "E-Commerce & SaaS",
-        serv3Desc: "Мағозаҳои онлайн бо низоми пардохт ва системаҳои мураккаби абрӣ.",
-        portfolioTitle: "Корҳои мо",
-        portfolioSubtitle: "Лоиҳаҳое, ки аз ҷониби дастаи мо барои бизнес таҳия шудаанд",
-        aboutTitle: "Дар бораи мо ва даста",
-        aboutSubtitle: "Барномасозон ва тарроҳони ботаҷрибаи ProgVision",
-        calcTitle: "Ҳисобкунаки арзиши лоиҳа"
-      }
-    };
+    function loadData(key, defaultVal) {
+      const saved = localStorage.getItem('progvision_' + key);
+      return saved ? JSON.parse(saved) : defaultVal;
+    }
 
-    function changeLanguage(lang) {
-      window.currentLang = lang;
-      const dict = window.translations[lang] || {};
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (dict[key]) el.innerText = dict[key];
-      });
+    function saveData(key, val) {
+      localStorage.setItem('progvision_' + key, JSON.stringify(val));
     }
 
     window.exchangeRates = { USD: 1, TJS: 10.9, RUB: 92.5, EUR: 0.92 };
-    window.currentCurrency = "USD";
-    
-    // Синхронизированные цены
-    window.sitePrices = { landing: 500, corporate: 1200, ecommerce: 2500, saas: 4000 };
+    window.currentCurrency = loadData('currency', 'USD');
+    window.sitePrices = loadData('sitePrices', { landing: 500, corporate: 1200, ecommerce: 2500, saas: 4000 });
     window.optionPrices = { auth: 300, payment: 500, admin: 400, multilang: 250 };
+    window.securitySettings = { allowedAdminEmail: "samirdv888@gmail.com" };
+    window.currentUser = null;
 
-    window.securitySettings = {
-      maintenanceMode: false,
-      allowedAdminEmail: "samirdv888@gmail.com"
-    };
-
-    window.promoCodes = [
-      { code: "PROG10", discount: 10, type: "percent" }
-    ];
+    window.promoCodes = loadData('promoCodes', [{ code: "PROG10", discount: 10, type: "percent" }]);
     window.activeDiscount = null;
 
-    window.portfolioData = [
-      {
-        title: "Osori15 Platform",
-        category: "Веб-сервис",
-        img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80",
-        desc: "Масштабная онлайн-платформа с системой авторизации и админ-панелью.",
-        link: "#"
-      }
-    ];
+    window.portfolioData = loadData('portfolio', [
+      { title: "Osori15 Platform", category: "Веб-сервис", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80", desc: "Масштабная онлайн-платформа с системой авторизации.", link: "#" }
+    ]);
 
-    window.teamData = [
-      {
-        name: "Самир",
-        role: "Lead Full-Stack Developer",
-        img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-        desc: "Главный архитектор систем ProgVision. Эксперт по React, Node.js и Cloud инфраструктуре."
-      }
-    ];
+    window.teamData = loadData('team', [
+      { name: "Самир", role: "Lead Full-Stack Developer", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80", desc: "Главный архитектор систем ProgVision." }
+    ]);
 
-    window.jobApplications = [];
+    window.projectOrders = loadData('orders', []);
+    window.blockedUsers = loadData('blocked', []);
+
+    // Решение проблемы с выходом при F5: глобальная функция авторизации
+    window.handleUserAuth = function(user) {
+      if (window.blockedUsers.includes(user.email)) {
+        alert('Ваш аккаунт заблокирован администратором.');
+        return;
+      }
+      window.currentUser = user;
+      updateCartBadge();
+
+      const isSuperAdmin = (user.email === window.securitySettings.allowedAdminEmail);
+      const authHTML = `
+        <div class="flex items-center gap-3">
+          <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-cyan-400">
+          ${isSuperAdmin ? `<button onclick="openAdminModal()" class="bg-red-500/20 border border-red-500 text-red-400 text-xs px-3 py-1 rounded-lg">Админка</button>` : ''}
+          <button onclick="logoutGoogle()" class="text-xs text-gray-400 hover:text-white">Выйти</button>
+        </div>
+      `;
+      const container = document.getElementById('authContainer');
+      if (container) container.innerHTML = authHTML;
+    }
+
+    function logoutGoogle() {
+      window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
+        window.currentUser = null;
+        location.reload();
+      });
+    }
+
+    function submitProjectOrder() {
+      if (!window.currentUser) {
+        alert('Пожалуйста, войдите через Google, чтобы отправить заявку!');
+        loginGoogle();
+        return;
+      }
+      const type = document.getElementById('calcType').selectedOptions[0].text;
+      const price = document.getElementById('totalPrice').innerText;
+      
+      const order = {
+        id: Date.now(),
+        userEmail: window.currentUser.email,
+        userName: window.currentUser.displayName,
+        title: type,
+        price: price,
+        date: new Date().toLocaleDateString(),
+        status: "Новая"
+      };
+
+      window.projectOrders.push(order);
+      saveData('orders', window.projectOrders);
+      updateCartBadge();
+      alert('Заявка успешно отправлена!');
+    }
+
+    function openClientCart() {
+      if (!window.currentUser) {
+        alert('Войдите через Google, чтобы открыть свою корзину!');
+        loginGoogle();
+        return;
+      }
+      const modal = document.getElementById('clientCartModal');
+      const content = document.getElementById('clientCartContent');
+      const userOrders = window.projectOrders.filter(o => o.userEmail === window.currentUser.email);
+
+      if (userOrders.length === 0) {
+        content.innerHTML = `<p class="text-xs text-gray-400">У вас пока нет активных заявок.</p>`;
+      } else {
+        content.innerHTML = userOrders.map(ord => `
+          <div class="bg-gray-800/80 p-3 rounded-xl border border-gray-700 flex justify-between items-center text-xs">
+            <div>
+              <span class="font-bold text-cyan-400">${ord.title}</span>
+              <div class="text-gray-400">Стоимость: ${ord.price}</div>
+            </div>
+            <button onclick="clientDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded">Удалить</button>
+          </div>
+        `).join('');
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeClientCart() { document.getElementById('clientCartModal').classList.add('hidden'); }
+
+    function clientDeleteOrder(id) {
+      window.projectOrders = window.projectOrders.filter(o => o.id !== id);
+      saveData('orders', window.projectOrders);
+      updateCartBadge();
+      openClientCart();
+    }
+
+    function updateCartBadge() {
+      if (!window.currentUser) return;
+      const userOrders = window.projectOrders.filter(o => o.userEmail === window.currentUser.email);
+      const badge = document.getElementById('cartBadge');
+      if (userOrders.length > 0) {
+        badge.innerText = userOrders.length;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function renderAdminAllOrders(container) {
+      container.innerHTML = `
+        <h4 class="font-bold text-lg mb-4 text-cyan-400">Заявки и Блокировка (${window.projectOrders.length})</h4>
+        <div class="space-y-3 text-xs">
+      `;
+      if (window.projectOrders.length === 0) {
+        container.innerHTML += `<p class="text-gray-400">Нет входящих заявок.</p>`;
+      } else {
+        window.projectOrders.forEach(ord => {
+          const isBlocked = window.blockedUsers.includes(ord.userEmail);
+          container.innerHTML += `
+            <div class="bg-gray-800/80 p-3 rounded-xl border border-gray-700 flex justify-between items-center">
+              <div>
+                <span class="font-bold text-white">${ord.userName}</span> (${ord.userEmail})<br>
+                <span class="text-cyan-400">${ord.title}</span> — <b>${ord.price}</b>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="adminDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded">Удалить</button>
+                <button onclick="toggleBlockUser('${ord.userEmail}')" class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded">${isBlocked ? 'Разблокировать' : 'Блокировать'}</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+      container.innerHTML += `</div>`;
+    }
+
+    function adminDeleteOrder(id) {
+      window.projectOrders = window.projectOrders.filter(o => o.id !== id);
+      saveData('orders', window.projectOrders);
+      renderAdminAllOrders(document.getElementById('adminContent'));
+      updateCartBadge();
+    }
+
+    function toggleBlockUser(email) {
+      if (window.blockedUsers.includes(email)) {
+        window.blockedUsers = window.blockedUsers.filter(e => e !== email);
+      } else {
+        window.blockedUsers.push(email);
+      }
+      saveData('blocked', window.blockedUsers);
+      renderAdminAllOrders(document.getElementById('adminContent'));
+    }
 
     function updateAllPricesOnSite() {
       const symbolMap = { USD: '$', TJS: ' сом.', RUB: ' ₽', EUR: ' €' };
@@ -443,7 +488,6 @@
       document.getElementById('priceTagLanding').innerText = `от ${Math.round(window.sitePrices.landing * rate)}${symbol}`;
       document.getElementById('priceTagCorp').innerText = `от ${Math.round(window.sitePrices.corporate * rate)}${symbol}`;
       document.getElementById('priceTagEcom').innerText = `от ${Math.round(window.sitePrices.ecommerce * rate)}${symbol}`;
-
       renderCalculatorUI();
     }
 
@@ -471,22 +515,7 @@
           <input type="checkbox" value="${window.optionPrices.multilang}" onchange="recalculateCost()" class="calcOpt accent-cyan-500"> Мультиязычность (+ $${window.optionPrices.multilang})
         </label>
       `;
-
       recalculateCost();
-    }
-
-    function submitTeamApplication(e) {
-      e.preventDefault();
-      const name = document.getElementById('applicantName').value;
-      const role = document.getElementById('applicantRole').value;
-      const contact = document.getElementById('applicantContact').value;
-      const link = document.getElementById('applicantLink').value;
-      const desc = document.getElementById('applicantDesc').value;
-
-      window.jobApplications.push({ name, role, contact, link, desc, date: new Date().toLocaleDateString() });
-
-      alert('Ваша заявка успешно отправлена!');
-      document.getElementById('joinTeamForm').reset();
     }
 
     function renderPortfolio() {
@@ -499,30 +528,27 @@
           </div>
           <div class="p-6">
             <h3 class="text-xl font-bold mb-2">${item.title}</h3>
-            <p class="text-gray-400 text-sm mb-4">${item.desc}</p>
-            <a href="${item.link}" target="_blank" class="inline-flex items-center gap-2 text-cyan-400 text-sm font-semibold hover:underline">
-              Открыть сайт <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-            </a>
+            <p class="text-gray-400 text-sm">${item.desc}</p>
           </div>
         </div>
       `).join('');
-      lucide.createIcons();
     }
 
     function renderTeam() {
       const grid = document.getElementById('teamGrid');
       grid.innerHTML = window.teamData.map(member => `
-        <div class="glass p-5 rounded-2xl border border-gray-800 hover:border-indigo-500/50 transition text-center flex flex-col items-center">
+        <div class="glass p-5 rounded-2xl border border-gray-800 transition text-center flex flex-col items-center">
           <img src="${member.img}" class="w-24 h-24 rounded-full object-cover border-2 border-cyan-400 mb-4 shadow-lg">
           <h3 class="text-lg font-bold">${member.name}</h3>
           <span class="text-xs text-cyan-400 font-semibold mb-3">${member.role}</span>
-          <p class="text-gray-400 text-xs leading-relaxed">${member.desc}</p>
+          <p class="text-gray-400 text-xs">${member.desc}</p>
         </div>
       `).join('');
     }
 
     function changeCurrency(curr) {
       window.currentCurrency = curr;
+      saveData('currency', curr);
       updateAllPricesOnSite();
     }
 
@@ -530,7 +556,6 @@
       const input = document.getElementById('promoInput').value.trim().toUpperCase();
       const msg = document.getElementById('promoMsg');
       const found = window.promoCodes.find(p => p.code === input);
-
       if (found) {
         window.activeDiscount = found;
         msg.className = "text-xs mt-2 text-green-400";
@@ -547,267 +572,94 @@
 
     function recalculateCost() {
       const basePrice = parseFloat(document.getElementById('calcType').value || 0);
-      const checkboxes = document.querySelectorAll('.calcOpt:checked');
       let extraPrice = 0;
-      checkboxes.forEach(cb => extraPrice += parseFloat(cb.value));
+      document.querySelectorAll('.calcOpt:checked').forEach(cb => extraPrice += parseFloat(cb.value));
 
       let totalUSD = basePrice + extraPrice;
-      let finalUSD = totalUSD;
-
-      if (window.activeDiscount) {
-        finalUSD = totalUSD * (1 - window.activeDiscount.discount / 100);
-      }
+      if (window.activeDiscount) totalUSD *= (1 - window.activeDiscount.discount / 100);
 
       const rate = window.exchangeRates[window.currentCurrency];
-      const convertedFinal = Math.round(finalUSD * rate);
-      const convertedOriginal = Math.round(totalUSD * rate);
-      
-      const symbolMap = { USD: '$', TJS: ' сом.', RUB: ' ₽', EUR: ' €' };
-      const symbol = symbolMap[window.currentCurrency];
+      const symbol = { USD: '$', TJS: ' сом.', RUB: ' ₽', EUR: ' €' }[window.currentCurrency];
 
-      document.getElementById('totalPrice').innerText = `${convertedFinal}${symbol}`;
-      
-      const oldPriceEl = document.getElementById('oldPrice');
-      if (window.activeDiscount && finalUSD < totalUSD) {
-        oldPriceEl.innerText = `${convertedOriginal}${symbol}`;
-        oldPriceEl.classList.remove('hidden');
-      } else {
-        oldPriceEl.classList.add('hidden');
-      }
+      document.getElementById('totalPrice').innerText = `${Math.round(totalUSD * rate)}${symbol}`;
     }
 
     function loginGoogle() {
       const { auth, provider, signInWithPopup } = window.firebaseAuth;
       signInWithPopup(auth, provider).then((result) => {
-        handleUserAuth(result.user);
+        window.handleUserAuth(result.user);
       }).catch(err => console.error(err));
     }
 
-    function handleUserAuth(user) {
-      const isSuperAdmin = (user.email === window.securitySettings.allowedAdminEmail);
-      
-      const container = document.getElementById('authContainer');
-      const containerMobile = document.getElementById('authContainerMobile');
-
-      const authHTML = `
-        <div class="flex items-center gap-3">
-          <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-cyan-400">
-          ${isSuperAdmin ? `<button onclick="openAdminModal()" class="bg-red-500/20 border border-red-500 text-red-400 text-xs px-3 py-1 rounded-lg">Админка</button>` : ''}
-          <button onclick="location.reload()" class="text-xs text-gray-400 hover:text-white">Выйти</button>
-        </div>
-      `;
-
-      if (container) container.innerHTML = authHTML;
-      if (containerMobile) containerMobile.innerHTML = authHTML;
-    }
-
-    function openAdminModal() { document.getElementById('adminModal').classList.remove('hidden'); showAdminTab('languages'); }
+    function openAdminModal() { document.getElementById('adminModal').classList.remove('hidden'); showAdminTab('allOrders'); }
     function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
 
     function showAdminTab(tab) {
       const content = document.getElementById('adminContent');
-      if (tab === 'languages') {
-        renderAdminLanguages(content);
-      } else if (tab === 'prices') {
-        renderAdminPrices(content);
-      } else if (tab === 'portfolio') {
-        renderAdminPortfolio(content);
-      } else if (tab === 'team') {
-        renderAdminTeam(content);
-      } else if (tab === 'applications') {
-        renderAdminApplications(content);
-      } else if (tab === 'promos') {
-        renderAdminPromos(content);
-      } else if (tab === 'rates') {
+      if (tab === 'allOrders') renderAdminAllOrders(content);
+      else if (tab === 'prices') {
         content.innerHTML = `
-          <h4 class="font-bold text-lg mb-4">Управление Курсами Валют</h4>
-          <div class="space-y-3">
-            <div><label class="text-xs">Курс TJS к 1 USD:</label><input type="number" value="${window.exchangeRates.TJS}" onchange="window.exchangeRates.TJS=this.value; updateAllPricesOnSite();" class="bg-gray-800 p-2 rounded w-full border border-gray-700"></div>
-            <div><label class="text-xs">Курс RUB к 1 USD:</label><input type="number" value="${window.exchangeRates.RUB}" onchange="window.exchangeRates.RUB=this.value; updateAllPricesOnSite();" class="bg-gray-800 p-2 rounded w-full border border-gray-700"></div>
-          </div>
+          <h4 class="font-bold text-lg mb-4 text-cyan-400">Изменение Базовой Цены Landing Page ($)</h4>
+          <input type="number" id="pLand" value="${window.sitePrices.landing}" class="bg-gray-800 p-2 rounded w-full mb-3 text-white text-xs">
+          <button onclick="window.sitePrices.landing=parseFloat(document.getElementById('pLand').value); saveData('sitePrices', window.sitePrices); updateAllPricesOnSite(); alert('Сохранено!');" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs">Сохранить</button>
+        `;
+      } else if (tab === 'portfolio') {
+        content.innerHTML = `
+          <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление Портфолио</h4>
+          <input type="text" id="pTitle" placeholder="Название" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
+          <input type="text" id="pImg" placeholder="URL фото" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
+          <textarea id="pDesc" placeholder="Описание" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs"></textarea>
+          <button onclick="addPortfolio()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs">Добавить проект</button>
+        `;
+      } else if (tab === 'team') {
+        content.innerHTML = `
+          <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление Командой</h4>
+          <input type="text" id="tName" placeholder="Имя" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
+          <input type="text" id="tRole" placeholder="Должность" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
+          <input type="text" id="tImg" placeholder="URL фото" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
+          <button onclick="addTeam()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs">Добавить сотрудника</button>
+        `;
+      } else if (tab === 'promos') {
+        content.innerHTML = `
+          <h4 class="font-bold text-lg mb-4 text-cyan-400">Промокоды</h4>
+          <input type="text" id="nPromo" placeholder="Код" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs uppercase">
+          <input type="number" id="nDisc" placeholder="Скидка %" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
+          <button onclick="addPromo()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs">Создать</button>
         `;
       }
     }
 
-    // --- УПРАВЛЕНИЕ ЯЗЫКАМИ ИЗ АДМИНКИ ---
-    function renderAdminLanguages(container) {
-      container.innerHTML = `
-        <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление Языками</h4>
-        <div class="bg-gray-800/80 p-4 rounded-xl mb-4 border border-gray-700 space-y-3 text-xs">
-          <h5 class="font-bold text-sm text-gray-200">Добавить новый язык:</h5>
-          <input type="text" id="newLangCode" placeholder="Код языка (напр. uz, kz, de)" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white uppercase">
-          <input type="text" id="newLangName" placeholder="Название (напр. Uzbek)" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white">
-          <button onclick="addNewLanguage()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold hover:bg-cyan-400 transition">Добавить язык</button>
-        </div>
-        <p class="text-xs text-gray-400">Доступные языки в селекторе сайта обновятся автоматически.</p>
-      `;
-    }
-
-    function addNewLanguage() {
-      const code = document.getElementById('newLangCode').value.trim().toLowerCase();
-      const name = document.getElementById('newLangName').value.trim();
-
-      if (code && name) {
-        if (!window.translations[code]) {
-          window.translations[code] = { ...window.translations['ru'] };
-        }
-        const select = document.getElementById('langSelect');
-        if (![...select.options].some(o => o.value === code)) {
-          const opt = document.createElement('option');
-          opt.value = code;
-          opt.innerText = name.toUpperCase();
-          select.appendChild(opt);
-        }
-        alert(`Язык ${name} успешно добавлен!`);
-      }
-    }
-
-    // --- УПРАВЛЕНИЕ ЦЕНАМИ ИЗ АДМИНКИ ---
-    function renderAdminPrices(container) {
-      container.innerHTML = `
-        <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление Ценами Проектов и Услуг ($ USD)</h4>
-        <div class="space-y-4 text-xs">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div><label class="block text-gray-400 mb-1">Landing Page ($):</label><input type="number" id="priceLanding" value="${window.sitePrices.landing}" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white"></div>
-            <div><label class="block text-gray-400 mb-1">Корпоративный сайт ($):</label><input type="number" id="priceCorporate" value="${window.sitePrices.corporate}" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white"></div>
-            <div><label class="block text-gray-400 mb-1">E-Commerce ($):</label><input type="number" id="priceEcommerce" value="${window.sitePrices.ecommerce}" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white"></div>
-            <div><label class="block text-gray-400 mb-1">SaaS Платформа ($):</label><input type="number" id="priceSaas" value="${window.sitePrices.saas}" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white"></div>
-          </div>
-          <button onclick="saveNewPrices()" class="w-full bg-cyan-500 text-black font-bold py-2.5 rounded-xl hover:bg-cyan-400 transition">Сохранить и обновить везде</button>
-        </div>
-      `;
-    }
-
-    function saveNewPrices() {
-      window.sitePrices.landing = parseFloat(document.getElementById('priceLanding').value) || 0;
-      window.sitePrices.corporate = parseFloat(document.getElementById('priceCorporate').value) || 0;
-      window.sitePrices.ecommerce = parseFloat(document.getElementById('priceEcommerce').value) || 0;
-      window.sitePrices.saas = parseFloat(document.getElementById('priceSaas').value) || 0;
-      updateAllPricesOnSite();
-      alert('Цены обновлены по всему сайту!');
-    }
-
-    // --- ДОБАВЛЕНИЕ ФОТО С УСТРОЙСТВА В КОМАНДУ ---
-    function renderAdminTeam(container) {
-      let html = `
-        <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление Командой</h4>
-        <div class="bg-gray-800/80 p-4 rounded-xl mb-6 border border-gray-700 space-y-3 text-xs">
-          <h5 class="font-bold text-sm text-gray-200">Добавить сотрудника (с фото с устройства):</h5>
-          <input type="text" id="tName" placeholder="Имя и Фамилия" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white">
-          <input type="text" id="tRole" placeholder="Должность" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white">
-          <div>
-            <label class="block text-gray-400 mb-1">Загрузить фото с устройства:</label>
-            <input type="file" id="tFile" accept="image/*" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white text-xs">
-          </div>
-          <textarea id="tDesc" placeholder="Описание / Опыт" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white"></textarea>
-          <button onclick="addTeamMemberWithFile()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold hover:bg-cyan-400 transition">Добавить сотрудника</button>
-        </div>
-
-        <h5 class="font-bold text-sm mb-3">Текущий состав (${window.teamData.length}):</h5>
-        <div class="space-y-2">
-      `;
-
-      window.teamData.forEach((member, idx) => {
-        html += `
-          <div class="flex justify-between items-center bg-gray-800/60 p-3 rounded-lg border border-gray-700 text-xs">
-            <div class="flex items-center gap-2">
-              <img src="${member.img}" class="w-8 h-8 rounded-full object-cover">
-              <span class="font-bold text-white">${member.name}</span> (${member.role})
-            </div>
-            <button onclick="deleteTeamMember(${idx})" class="bg-red-500/20 text-red-400 border border-red-500/50 px-2 py-1 rounded">Удалить</button>
-          </div>
-        `;
-      });
-
-      html += `</div>`;
-      container.innerHTML = html;
-    }
-
-    function addTeamMemberWithFile() {
-      const name = document.getElementById('tName').value.trim();
-      const role = document.getElementById('tRole').value.trim();
-      const desc = document.getElementById('tDesc').value.trim();
-      const fileInput = document.getElementById('tFile');
-
-      if (!name || !role) {
-        alert('Заполните имя и должность!');
-        return;
-      }
-
-      if (fileInput.files && fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          window.teamData.push({ name, role, img: e.target.result, desc });
-          renderTeam();
-          renderAdminTeam(document.getElementById('adminContent'));
-        };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        window.teamData.push({ name, role, img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80", desc });
-        renderTeam();
-        renderAdminTeam(document.getElementById('adminContent'));
-      }
-    }
-
-    function deleteTeamMember(idx) {
-      window.teamData.splice(idx, 1);
-      renderTeam();
-      renderAdminTeam(document.getElementById('adminContent'));
-    }
-
-    function renderAdminPortfolio(container) {
-      container.innerHTML = `
-        <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление Портфолио</h4>
-        <div class="space-y-3 text-xs">
-          <input type="text" id="pTitle" placeholder="Название" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white">
-          <input type="text" id="pCategory" placeholder="Категория" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white">
-          <input type="text" id="pImg" placeholder="URL картинки" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white">
-          <textarea id="pDesc" placeholder="Описание" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white"></textarea>
-          <button onclick="addPortfolioItem()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold">Добавить проект</button>
-        </div>
-      `;
-    }
-
-    function addPortfolioItem() {
-      const title = document.getElementById('pTitle').value.trim();
-      const category = document.getElementById('pCategory').value.trim();
-      const img = document.getElementById('pImg').value.trim() || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80";
-      const desc = document.getElementById('pDesc').value.trim();
+    function addPortfolio() {
+      const title = document.getElementById('pTitle').value;
+      const img = document.getElementById('pImg').value;
+      const desc = document.getElementById('pDesc').value;
       if (title) {
-        window.portfolioData.push({ title, category: category || "Web", img, desc, link: "#" });
+        window.portfolioData.push({ title, category: "Web", img: img || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80", desc, link: "#" });
+        saveData('portfolio', window.portfolioData);
         renderPortfolio();
-        alert('Проект добавлен!');
+        alert('Проект добавлен и сохранен!');
       }
     }
 
-    function renderAdminApplications(container) {
-      container.innerHTML = `<h4 class="font-bold text-lg mb-4 text-cyan-400">Заявки соискателей (${window.jobApplications.length})</h4>`;
-      if (window.jobApplications.length === 0) {
-        container.innerHTML += `<p class="text-xs text-gray-400">Нет заявок.</p>`;
-      } else {
-        window.jobApplications.forEach((app, idx) => {
-          container.innerHTML += `<div class="bg-gray-800 p-2 rounded mb-2 text-xs"><b>${app.name}</b> (${app.role}) - ${app.contact}</div>`;
-        });
+    function addTeam() {
+      const name = document.getElementById('tName').value;
+      const role = document.getElementById('tRole').value;
+      const img = document.getElementById('tImg').value;
+      if (name) {
+        window.teamData.push({ name, role, img: img || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80", desc: "Разработчик" });
+        saveData('team', window.teamData);
+        renderTeam();
+        alert('Сотрудник добавлен и сохранен!');
       }
     }
 
-    function renderAdminPromos(container) {
-      container.innerHTML = `
-        <h4 class="font-bold text-lg mb-4 text-cyan-400">Промокоды</h4>
-        <div class="space-y-3 text-xs">
-          <input type="text" id="newPromoCode" placeholder="Код" class="bg-gray-900 border border-gray-700 p-2 rounded w-full uppercase text-white">
-          <input type="number" id="newPromoDiscount" placeholder="Скидка %" class="bg-gray-900 border border-gray-700 p-2 rounded w-full text-white">
-          <button onclick="addPromoCode()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold">Создать промокод</button>
-        </div>
-      `;
-    }
-
-    function addPromoCode() {
-      const code = document.getElementById('newPromoCode').value.trim().toUpperCase();
-      const discount = parseFloat(document.getElementById('newPromoDiscount').value);
+    function addPromo() {
+      const code = document.getElementById('nPromo').value.toUpperCase();
+      const discount = parseFloat(document.getElementById('nDisc').value);
       if (code && !isNaN(discount)) {
         window.promoCodes.push({ code, discount, type: "percent" });
-        alert('Промокод создан!');
+        saveData('promoCodes', window.promoCodes);
+        alert('Промокод сохранен!');
       }
     }
 
@@ -823,12 +675,9 @@
     const canvasContainer = document.getElementById('canvas3d');
     if (canvasContainer) canvasContainer.appendChild(renderer.domElement);
 
-    const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
-    const material = new THREE.MeshBasicMaterial({ color: 0x06b6d4, wireframe: true });
-    const torusKnot = new THREE.Mesh(geometry, material);
+    const torusKnot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshBasicMaterial({ color: 0x06b6d4, wireframe: true }));
     scene.add(torusKnot);
     camera.position.z = 30;
-
     function animate() {
       requestAnimationFrame(animate);
       torusKnot.rotation.x += 0.005;
