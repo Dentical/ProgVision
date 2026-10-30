@@ -69,7 +69,7 @@
         <span class="text-2xl font-black tracking-wider gradient-text">ProgVision</span>
       </div>
 
-      <!-- Меню (SPA переключение) -->
+      <!-- Меню сайта (SPA переключение) -->
       <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
         <button onclick="switchPage('services')" class="hover:text-cyan-400 transition cursor-pointer">Услуги</button>
         <button onclick="switchPage('portfolio')" class="hover:text-cyan-400 transition cursor-pointer">Портфолио</button>
@@ -80,7 +80,7 @@
 
       <div class="flex items-center gap-3">
         <!-- Валюты -->
-        <select id="currencySelect" onchange="changeCurrency(this.value)" class="bg-gray-800 text-xs px-2 py-1 rounded border border-gray-700 text-green-400">
+        <select id="currencySelect" onchange="changeCurrency(this.value)" class="bg-gray-800 text-xs px-2 py-1 rounded border border-gray-700 text-green-400 cursor-pointer">
           <option value="USD">$ USD</option>
           <option value="TJS">сом TJS</option>
           <option value="RUB">₽ RUB</option>
@@ -88,18 +88,18 @@
         </select>
 
         <!-- Корзина Клиента -->
-        <button onclick="openClientCart()" class="relative p-2 bg-gray-800/80 rounded-xl hover:bg-gray-700 transition text-cyan-400" title="Мои заявки">
+        <button onclick="openClientCart()" class="relative p-2 bg-gray-800/80 rounded-xl hover:bg-gray-700 transition text-cyan-400 cursor-pointer" title="Мои заявки">
           <i data-lucide="shopping-bag" class="w-5 h-5"></i>
           <span id="cartBadge" class="absolute -top-1 -right-1 bg-cyan-500 text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
         </button>
 
         <div id="authContainer" class="hidden sm:block">
-          <button onclick="loginGoogle()" class="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-lg">
+          <button onclick="loginGoogle()" class="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition shadow-lg cursor-pointer">
             <i data-lucide="log-in" class="w-4 h-4"></i> Войти
           </button>
         </div>
 
-        <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-300 hover:text-cyan-400">
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-300 hover:text-cyan-400 cursor-pointer">
           <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
       </div>
@@ -203,7 +203,7 @@
     <div class="glass p-6 sm:p-8 rounded-3xl space-y-6">
       <div>
         <label class="block text-sm font-semibold mb-2">Тип проекта:</label>
-        <select id="calcType" onchange="recalculateCost()" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm"></select>
+        <select id="calcType" onchange="recalculateCost()" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm cursor-pointer"></select>
       </div>
       <div>
         <label class="block text-sm font-semibold mb-2">Дополнительные опции:</label>
@@ -278,7 +278,7 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="flex flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
           <button onclick="showAdminTab('allOrders')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold text-cyan-400 flex items-center gap-2 cursor-pointer"><i data-lucide="clipboard-list" class="w-4 h-4"></i> Заявки и Блокировка</button>
-          <button onclick="showAdminTab('prices')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="dollar-sign" class="w-4 h-4"></i> Цены</button>
+          <button onclick="showAdminTab('prices')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="dollar-sign" class="w-4 h-4"></i> Все Цены</button>
           <button onclick="showAdminTab('portfolio')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="briefcase" class="w-4 h-4"></i> Портфолио</button>
           <button onclick="showAdminTab('team')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="users" class="w-4 h-4"></i> Команда</button>
           <button onclick="showAdminTab('promos')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="tag" class="w-4 h-4"></i> Промокоды</button>
@@ -321,7 +321,7 @@
     window.exchangeRates = { USD: 1, TJS: 10.9, RUB: 92.5, EUR: 0.92 };
     window.currentCurrency = loadData('currency', 'USD');
     window.sitePrices = loadData('sitePrices', { landing: 500, corporate: 1200, ecommerce: 2500, saas: 4000 });
-    window.optionPrices = { auth: 300, payment: 500, admin: 400, multilang: 250 };
+    window.optionPrices = loadData('optionPrices', { auth: 300, payment: 500, admin: 400, multilang: 250 });
     window.securitySettings = { allowedAdminEmail: "samirdv888@gmail.com" };
     window.currentUser = null;
 
@@ -602,15 +602,49 @@
       if (tab === 'allOrders') renderAdminAllOrders(content);
       else if (tab === 'prices') {
         content.innerHTML = `
-          <h4 class="font-bold text-lg mb-4 text-cyan-400">Изменение Базовой Цены Landing Page ($)</h4>
-          <input type="number" id="pLand" value="${window.sitePrices.landing}" class="bg-gray-800 p-2 rounded w-full mb-3 text-white text-xs">
-          <button onclick="window.sitePrices.landing=parseFloat(document.getElementById('pLand').value); saveData('sitePrices', window.sitePrices); updateAllPricesOnSite(); alert('Сохранено!');" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs cursor-pointer">Сохранить</button>
+          <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление всеми ценами ($ USD)</h4>
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="text-gray-400 block mb-1">Landing Page:</label>
+              <input type="number" id="pLand" value="${window.sitePrices.landing}" class="bg-gray-800 p-2 rounded w-full text-white">
+            </div>
+            <div>
+              <label class="text-gray-400 block mb-1">Корпоративный сайт:</label>
+              <input type="number" id="pCorp" value="${window.sitePrices.corporate}" class="bg-gray-800 p-2 rounded w-full text-white">
+            </div>
+            <div>
+              <label class="text-gray-400 block mb-1">Интернет-магазин / E-Commerce:</label>
+              <input type="number" id="pEcom" value="${window.sitePrices.ecommerce}" class="bg-gray-800 p-2 rounded w-full text-white">
+            </div>
+            <div>
+              <label class="text-gray-400 block mb-1">SaaS / Веб-система:</label>
+              <input type="number" id="pSaas" value="${window.sitePrices.saas}" class="bg-gray-800 p-2 rounded w-full text-white">
+            </div>
+            <hr class="border-gray-700 my-2">
+            <div>
+              <label class="text-gray-400 block mb-1">Опция: Авторизация:</label>
+              <input type="number" id="optAuth" value="${window.optionPrices.auth}" class="bg-gray-800 p-2 rounded w-full text-white">
+            </div>
+            <div>
+              <label class="text-gray-400 block mb-1">Опция: Оплата:</label>
+              <input type="number" id="optPay" value="${window.optionPrices.payment}" class="bg-gray-800 p-2 rounded w-full text-white">
+            </div>
+            <div>
+              <label class="text-gray-400 block mb-1">Опция: Админ-панель:</label>
+              <input type="number" id="optAdmin" value="${window.optionPrices.admin}" class="bg-gray-800 p-2 rounded w-full text-white">
+            </div>
+            <div>
+              <label class="text-gray-400 block mb-1">Опция: Мультиязычность:</label>
+              <input type="number" id="optLang" value="${window.optionPrices.multilang}" class="bg-gray-800 p-2 rounded w-full text-white">
+            </div>
+            <button onclick="saveAllPricesFromAdmin()" class="bg-cyan-500 text-black px-4 py-2.5 rounded font-bold w-full cursor-pointer mt-3">Сохранить все цены</button>
+          </div>
         `;
       } else if (tab === 'portfolio') {
         content.innerHTML = `
           <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление Портфолио</h4>
-          <input type="text" id="pTitle" placeholder="Название" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
-          <input type="text" id="pImg" placeholder="URL фото" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
+          <input type="text" id="pTitle" placeholder="Название проекта" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
+          <input type="text" id="pImg" placeholder="URL фото (картинки)" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
           <textarea id="pDesc" placeholder="Описание" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs"></textarea>
           <button onclick="addPortfolio()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs cursor-pointer">Добавить проект</button>
         `;
@@ -625,11 +659,28 @@
       } else if (tab === 'promos') {
         content.innerHTML = `
           <h4 class="font-bold text-lg mb-4 text-cyan-400">Промокоды</h4>
-          <input type="text" id="nPromo" placeholder="Код" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs uppercase">
+          <input type="text" id="nPromo" placeholder="Код (например PROG20)" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs uppercase">
           <input type="number" id="nDisc" placeholder="Скидка %" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
-          <button onclick="addPromo()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs cursor-pointer">Создать</button>
+          <button onclick="addPromo()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs cursor-pointer">Создать промокод</button>
         `;
       }
+    }
+
+    function saveAllPricesFromAdmin() {
+      window.sitePrices.landing = parseFloat(document.getElementById('pLand').value) || 0;
+      window.sitePrices.corporate = parseFloat(document.getElementById('pCorp').value) || 0;
+      window.sitePrices.ecommerce = parseFloat(document.getElementById('pEcom').value) || 0;
+      window.sitePrices.saas = parseFloat(document.getElementById('pSaas').value) || 0;
+
+      window.optionPrices.auth = parseFloat(document.getElementById('optAuth').value) || 0;
+      window.optionPrices.payment = parseFloat(document.getElementById('optPay').value) || 0;
+      window.optionPrices.admin = parseFloat(document.getElementById('optAdmin').value) || 0;
+      window.optionPrices.multilang = parseFloat(document.getElementById('optLang').value) || 0;
+
+      saveData('sitePrices', window.sitePrices);
+      saveData('optionPrices', window.optionPrices);
+      updateAllPricesOnSite();
+      alert('Все цены успешно сохранены и обновлены на сайте!');
     }
 
     function addPortfolio() {
