@@ -278,6 +278,7 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="flex flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
           <button onclick="showAdminTab('allOrders')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold text-cyan-400 flex items-center gap-2 cursor-pointer"><i data-lucide="clipboard-list" class="w-4 h-4"></i> Заявки и Блокировка</button>
+          <button onclick="showAdminTab('admins')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="user-plus" class="w-4 h-4"></i> Администраторы</button>
           <button onclick="showAdminTab('prices')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="dollar-sign" class="w-4 h-4"></i> Все Цены</button>
           <button onclick="showAdminTab('portfolio')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="briefcase" class="w-4 h-4"></i> Портфолио</button>
           <button onclick="showAdminTab('team')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="users" class="w-4 h-4"></i> Команда</button>
@@ -322,7 +323,11 @@
     window.currentCurrency = loadData('currency', 'USD');
     window.sitePrices = loadData('sitePrices', { landing: 500, corporate: 1200, ecommerce: 2500, saas: 4000 });
     window.optionPrices = loadData('optionPrices', { auth: 300, payment: 500, admin: 400, multilang: 250 });
-    window.securitySettings = { allowedAdminEmail: "samirdv888@gmail.com" };
+    
+    // Администраторы (главный + дополнительные из localStorage)
+    window.superAdminEmail = "samirdv888@gmail.com";
+    window.adminList = loadData('admins', [window.superAdminEmail]);
+
     window.currentUser = null;
 
     window.promoCodes = loadData('promoCodes', [{ code: "PROG10", discount: 10, type: "percent" }]);
@@ -339,11 +344,16 @@
     window.projectOrders = loadData('orders', []);
     window.blockedUsers = loadData('blocked', []);
 
-    // Авторизация и сохранение при F5 (с защитой супер-админа от блокировки)
-    window.handleUserAuth = function(user) {
-      const isSuperAdmin = (user.email === window.securitySettings.allowedAdminEmail);
+    // Проверка, является ли пользователь администратором
+    function checkIsAdmin(email) {
+      return window.adminList.includes(email) || email === window.superAdminEmail;
+    }
 
-      if (!isSuperAdmin && window.blockedUsers.includes(user.email)) {
+    // Авторизация и сохранение при F5 (защита админов от блокировки)
+    window.handleUserAuth = function(user) {
+      const isAdmin = checkIsAdmin(user.email);
+
+      if (!isAdmin && window.blockedUsers.includes(user.email)) {
         alert('Ваш аккаунт заблокирован администратором.');
         return;
       }
@@ -353,7 +363,7 @@
       const authHTML = `
         <div class="flex items-center gap-3">
           <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-cyan-400">
-          ${isSuperAdmin ? `<button onclick="openAdminModal()" class="bg-red-500/20 border border-red-500 text-red-400 text-xs px-3 py-1 rounded-lg cursor-pointer">Админка</button>` : ''}
+          ${isAdmin ? `<button onclick="openAdminModal()" class="bg-red-500/20 border border-red-500 text-red-400 text-xs px-3 py-1 rounded-lg cursor-pointer">Админка</button>` : ''}
           <button onclick="logoutGoogle()" class="text-xs text-gray-400 hover:text-white cursor-pointer">Выйти</button>
         </div>
       `;
@@ -475,8 +485,8 @@
     }
 
     function toggleBlockUser(email) {
-      if (email === window.securitySettings.allowedAdminEmail) {
-        alert('Нельзя заблокировать главного администратора!');
+      if (checkIsAdmin(email)) {
+        alert('Нельзя заблокировать администратора!');
         return;
       }
       if (window.blockedUsers.includes(email)) {
@@ -605,7 +615,27 @@
     function showAdminTab(tab) {
       const content = document.getElementById('adminContent');
       if (tab === 'allOrders') renderAdminAllOrders(content);
-      else if (tab === 'prices') {
+      else if (tab === 'admins') {
+        content.innerHTML = `
+          <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление Администраторами</h4>
+          <div class="space-y-3 text-xs mb-6">
+            <input type="email" id="newAdminEmail" placeholder="Email нового админа (например: alex@gmail.com)" class="bg-gray-800 p-2 rounded w-full text-white">
+            <button onclick="addAdminByEmail()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold w-full cursor-pointer">Добавить администратора</button>
+          </div>
+          <h5 class="font-bold text-sm mb-2 text-gray-300">Список администраторов:</h5>
+          <div class="space-y-2 text-xs">
+            ${window.adminList.map((email, idx) => {
+              const isSuper = (email === window.superAdminEmail);
+              return `
+                <div class="bg-gray-800/80 p-2.5 rounded-xl flex justify-between items-center">
+                  <span><b>${email}</b> ${isSuper ? '<span class="text-cyan-400 ml-1">(Главный админ)</span>' : ''}</span>
+                  ${!isSuper ? `<button onclick="deleteAdminByEmail(${idx})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">Удалить</button>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      } else if (tab === 'prices') {
         content.innerHTML = `
           <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление всеми ценами ($ USD)</h4>
           <div class="space-y-3 text-xs">
@@ -697,6 +727,29 @@
           </div>
         `;
       }
+    }
+
+    function addAdminByEmail() {
+      const email = document.getElementById('newAdminEmail').value.trim().toLowerCase();
+      if (email && !window.adminList.includes(email)) {
+        window.adminList.push(email);
+        saveData('admins', window.adminList);
+        showAdminTab('admins');
+        alert(`Администратор ${email} успешно добавлен!`);
+      } else if (window.adminList.includes(email)) {
+        alert('Этот email уже есть в списке администраторов!');
+      }
+    }
+
+    function deleteAdminByEmail(idx) {
+      const email = window.adminList[idx];
+      if (email === window.superAdminEmail) {
+        alert('Нельзя удалить главного администратора!');
+        return;
+      }
+      window.adminList.splice(idx, 1);
+      saveData('admins', window.adminList);
+      showAdminTab('admins');
     }
 
     function saveAllPricesFromAdmin() {
