@@ -71,11 +71,11 @@
 
       <!-- Меню (SPA переключение) -->
       <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-        <button onclick="switchPage('services')" class="hover:text-cyan-400 transition">Услуги</button>
-        <button onclick="switchPage('portfolio')" class="hover:text-cyan-400 transition">Портфолио</button>
-        <button onclick="switchPage('about')" class="hover:text-cyan-400 transition">О нас</button>
-        <button onclick="switchPage('calculator')" class="hover:text-cyan-400 transition">Калькулятор</button>
-        <button onclick="switchPage('contacts')" class="hover:text-cyan-400 transition">Контакты</button>
+        <button onclick="switchPage('services')" class="hover:text-cyan-400 transition cursor-pointer">Услуги</button>
+        <button onclick="switchPage('portfolio')" class="hover:text-cyan-400 transition cursor-pointer">Портфолио</button>
+        <button onclick="switchPage('about')" class="hover:text-cyan-400 transition cursor-pointer">О нас</button>
+        <button onclick="switchPage('calculator')" class="hover:text-cyan-400 transition cursor-pointer">Калькулятор</button>
+        <button onclick="switchPage('contacts')" class="hover:text-cyan-400 transition cursor-pointer">Контакты</button>
       </nav>
 
       <div class="flex items-center gap-3">
@@ -132,8 +132,8 @@
         Разработка высоконагруженных веб-сервисов, интернет-магазинов и корпоративных порталов с индивидуальным дизайном.
       </p>
       <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-        <button onclick="switchPage('calculator')" class="bg-cyan-500 hover:bg-cyan-400 text-black px-8 py-4 rounded-xl font-bold transition shadow-lg glow-cyan">Рассчитать проект</button>
-        <button onclick="switchPage('portfolio')" class="glass px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition">Смотреть работы</button>
+        <button onclick="switchPage('calculator')" class="bg-cyan-500 hover:bg-cyan-400 text-black px-8 py-4 rounded-xl font-bold transition shadow-lg glow-cyan cursor-pointer">Рассчитать проект</button>
+        <button onclick="switchPage('portfolio')" class="glass px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition cursor-pointer">Смотреть работы</button>
       </div>
     </div>
   </section>
@@ -192,7 +192,7 @@
           <input type="url" id="applicantLink" placeholder="Ссылка на GitHub / Портфолио" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm outline-none">
         </div>
         <textarea id="applicantDesc" rows="3" placeholder="О себе..." class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm outline-none"></textarea>
-        <button type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold py-3.5 rounded-xl glow-cyan">Отправить заявку в команду</button>
+        <button type="submit" class="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold py-3.5 rounded-xl glow-cyan cursor-pointer">Отправить заявку в команду</button>
       </form>
     </div>
   </section>
@@ -213,7 +213,7 @@
         <label class="block text-sm font-semibold mb-2">Промокод:</label>
         <div class="flex flex-col sm:flex-row gap-3">
           <input type="text" id="promoInput" placeholder="PROG10" class="bg-gray-800 border border-gray-700 p-3 rounded-xl flex-1 uppercase text-sm font-mono">
-          <button onclick="applyPromo()" class="bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold text-sm">Применить</button>
+          <button onclick="applyPromo()" class="bg-indigo-600 text-white px-5 py-3 rounded-xl font-semibold text-sm cursor-pointer">Применить</button>
         </div>
         <div id="promoMsg" class="text-xs mt-2 hidden"></div>
       </div>
@@ -225,7 +225,7 @@
             <div id="oldPrice" class="text-base text-gray-500 line-through hidden"></div>
           </div>
         </div>
-        <button onclick="submitProjectOrder()" class="bg-cyan-500 text-black px-6 py-3 rounded-xl font-bold w-full sm:w-auto text-center">Отправить заявку</button>
+        <button onclick="submitProjectOrder()" class="bg-cyan-500 text-black px-6 py-3 rounded-xl font-bold w-full sm:w-auto text-center cursor-pointer">Отправить заявку</button>
       </div>
     </div>
   </section>
@@ -261,7 +261,7 @@
     <div class="glass w-full max-w-lg rounded-3xl p-6 border border-cyan-500/30 max-h-[80vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-800">
         <h3 class="text-xl font-bold text-cyan-400 flex items-center gap-2"><i data-lucide="shopping-bag"></i> Мои отправленные заявки</h3>
-        <button onclick="closeClientCart()" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+        <button onclick="closeClientCart()" class="text-gray-400 hover:text-white cursor-pointer"><i data-lucide="x"></i></button>
       </div>
       <div id="clientCartContent" class="space-y-3"></div>
     </div>
@@ -272,16 +272,16 @@
     <div class="glass w-full max-w-5xl rounded-3xl p-4 sm:p-6 border border-cyan-500/30 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-800">
         <h3 class="text-xl sm:text-2xl font-bold text-cyan-400 flex items-center gap-2"><i data-lucide="shield-check"></i> Панель Администратора</h3>
-        <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+        <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white cursor-pointer"><i data-lucide="x"></i></button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="flex flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
-          <button onclick="showAdminTab('allOrders')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold text-cyan-400 flex items-center gap-2"><i data-lucide="clipboard-list" class="w-4 h-4"></i> Заявки и Блокировка</button>
-          <button onclick="showAdminTab('prices')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2"><i data-lucide="dollar-sign" class="w-4 h-4"></i> Цены</button>
-          <button onclick="showAdminTab('portfolio')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2"><i data-lucide="briefcase" class="w-4 h-4"></i> Портфолио</button>
-          <button onclick="showAdminTab('team')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Команда</button>
-          <button onclick="showAdminTab('promos')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2"><i data-lucide="tag" class="w-4 h-4"></i> Промокоды</button>
+          <button onclick="showAdminTab('allOrders')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold text-cyan-400 flex items-center gap-2 cursor-pointer"><i data-lucide="clipboard-list" class="w-4 h-4"></i> Заявки и Блокировка</button>
+          <button onclick="showAdminTab('prices')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="dollar-sign" class="w-4 h-4"></i> Цены</button>
+          <button onclick="showAdminTab('portfolio')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="briefcase" class="w-4 h-4"></i> Портфолио</button>
+          <button onclick="showAdminTab('team')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="users" class="w-4 h-4"></i> Команда</button>
+          <button onclick="showAdminTab('promos')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="tag" class="w-4 h-4"></i> Промокоды</button>
         </div>
         <div id="adminContent" class="md:col-span-3 bg-gray-900/60 p-4 rounded-2xl border border-gray-800 min-h-[300px]"></div>
       </div>
@@ -291,13 +291,16 @@
   <script>
     lucide.createIcons();
 
+    // Переключение страниц (SPA)
     function switchPage(pageId) {
       document.querySelectorAll('.page-section').forEach(el => {
         el.classList.remove('active');
+        el.style.display = 'none';
       });
       const target = document.getElementById('page-' + pageId);
       if (target) {
         target.classList.add('active');
+        target.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
@@ -336,7 +339,7 @@
     window.projectOrders = loadData('orders', []);
     window.blockedUsers = loadData('blocked', []);
 
-    // Решение проблемы с выходом при F5: глобальная функция авторизации
+    // Авторизация и сохранение при F5
     window.handleUserAuth = function(user) {
       if (window.blockedUsers.includes(user.email)) {
         alert('Ваш аккаунт заблокирован администратором.');
@@ -349,8 +352,8 @@
       const authHTML = `
         <div class="flex items-center gap-3">
           <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-cyan-400">
-          ${isSuperAdmin ? `<button onclick="openAdminModal()" class="bg-red-500/20 border border-red-500 text-red-400 text-xs px-3 py-1 rounded-lg">Админка</button>` : ''}
-          <button onclick="logoutGoogle()" class="text-xs text-gray-400 hover:text-white">Выйти</button>
+          ${isSuperAdmin ? `<button onclick="openAdminModal()" class="bg-red-500/20 border border-red-500 text-red-400 text-xs px-3 py-1 rounded-lg cursor-pointer">Админка</button>` : ''}
+          <button onclick="logoutGoogle()" class="text-xs text-gray-400 hover:text-white cursor-pointer">Выйти</button>
         </div>
       `;
       const container = document.getElementById('authContainer');
@@ -408,7 +411,7 @@
               <span class="font-bold text-cyan-400">${ord.title}</span>
               <div class="text-gray-400">Стоимость: ${ord.price}</div>
             </div>
-            <button onclick="clientDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded">Удалить</button>
+            <button onclick="clientDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">Удалить</button>
           </div>
         `).join('');
       }
@@ -453,8 +456,8 @@
                 <span class="text-cyan-400">${ord.title}</span> — <b>${ord.price}</b>
               </div>
               <div class="flex gap-2">
-                <button onclick="adminDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded">Удалить</button>
-                <button onclick="toggleBlockUser('${ord.userEmail}')" class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded">${isBlocked ? 'Разблокировать' : 'Блокировать'}</button>
+                <button onclick="adminDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">Удалить</button>
+                <button onclick="toggleBlockUser('${ord.userEmail}')" class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded cursor-pointer">${isBlocked ? 'Разблокировать' : 'Блокировать'}</button>
               </div>
             </div>
           `;
@@ -601,7 +604,7 @@
         content.innerHTML = `
           <h4 class="font-bold text-lg mb-4 text-cyan-400">Изменение Базовой Цены Landing Page ($)</h4>
           <input type="number" id="pLand" value="${window.sitePrices.landing}" class="bg-gray-800 p-2 rounded w-full mb-3 text-white text-xs">
-          <button onclick="window.sitePrices.landing=parseFloat(document.getElementById('pLand').value); saveData('sitePrices', window.sitePrices); updateAllPricesOnSite(); alert('Сохранено!');" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs">Сохранить</button>
+          <button onclick="window.sitePrices.landing=parseFloat(document.getElementById('pLand').value); saveData('sitePrices', window.sitePrices); updateAllPricesOnSite(); alert('Сохранено!');" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs cursor-pointer">Сохранить</button>
         `;
       } else if (tab === 'portfolio') {
         content.innerHTML = `
@@ -609,7 +612,7 @@
           <input type="text" id="pTitle" placeholder="Название" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
           <input type="text" id="pImg" placeholder="URL фото" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
           <textarea id="pDesc" placeholder="Описание" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs"></textarea>
-          <button onclick="addPortfolio()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs">Добавить проект</button>
+          <button onclick="addPortfolio()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs cursor-pointer">Добавить проект</button>
         `;
       } else if (tab === 'team') {
         content.innerHTML = `
@@ -617,14 +620,14 @@
           <input type="text" id="tName" placeholder="Имя" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
           <input type="text" id="tRole" placeholder="Должность" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
           <input type="text" id="tImg" placeholder="URL фото" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
-          <button onclick="addTeam()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs">Добавить сотрудника</button>
+          <button onclick="addTeam()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs cursor-pointer">Добавить сотрудника</button>
         `;
       } else if (tab === 'promos') {
         content.innerHTML = `
           <h4 class="font-bold text-lg mb-4 text-cyan-400">Промокоды</h4>
           <input type="text" id="nPromo" placeholder="Код" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs uppercase">
           <input type="number" id="nDisc" placeholder="Скидка %" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
-          <button onclick="addPromo()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs">Создать</button>
+          <button onclick="addPromo()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs cursor-pointer">Создать</button>
         `;
       }
     }
@@ -663,6 +666,8 @@
       }
     }
 
+    // Инициализация при старте
+    switchPage('hero');
     updateAllPricesOnSite();
     renderPortfolio();
     renderTeam();
