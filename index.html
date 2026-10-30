@@ -277,7 +277,10 @@
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="flex flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
-          <button onclick="showAdminTab('allOrders')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold text-cyan-400 flex items-center gap-2 cursor-pointer"><i data-lucide="clipboard-list" class="w-4 h-4"></i> Заявки и Блокировка</button>
+          <button onclick="showAdminTab('allOrders')" class="relative p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold text-cyan-400 flex items-center justify-between cursor-pointer">
+            <span class="flex items-center gap-2"><i data-lucide="clipboard-list" class="w-4 h-4"></i> Заявки</span>
+            <span id="adminOrdersBadge" class="bg-cyan-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+          </button>
           <button onclick="showAdminTab('admins')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="user-plus" class="w-4 h-4"></i> Администраторы</button>
           <button onclick="showAdminTab('prices')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="dollar-sign" class="w-4 h-4"></i> Все Цены</button>
           <button onclick="showAdminTab('portfolio')" class="p-3 rounded-xl bg-gray-800 hover:bg-cyan-500/25 text-left font-semibold flex items-center gap-2 cursor-pointer"><i data-lucide="briefcase" class="w-4 h-4"></i> Портфолио</button>
@@ -324,10 +327,8 @@
     window.sitePrices = loadData('sitePrices', { landing: 500, corporate: 1200, ecommerce: 2500, saas: 4000 });
     window.optionPrices = loadData('optionPrices', { auth: 300, payment: 500, admin: 400, multilang: 250 });
     
-    // Администраторы (главный + дополнительные из localStorage)
     window.superAdminEmail = "samirdv888@gmail.com";
     window.adminList = loadData('admins', [window.superAdminEmail]);
-
     window.currentUser = null;
 
     window.promoCodes = loadData('promoCodes', [{ code: "PROG10", discount: 10, type: "percent" }]);
@@ -344,12 +345,11 @@
     window.projectOrders = loadData('orders', []);
     window.blockedUsers = loadData('blocked', []);
 
-    // Проверка, является ли пользователь администратором
     function checkIsAdmin(email) {
       return window.adminList.includes(email) || email === window.superAdminEmail;
     }
 
-    // Авторизация и сохранение при F5 (защита админов от блокировки)
+    // Авторизация и сохранение при F5
     window.handleUserAuth = function(user) {
       const isAdmin = checkIsAdmin(user.email);
 
@@ -359,16 +359,23 @@
       }
       window.currentUser = user;
       updateCartBadge();
+      updateAdminNotificationBadge();
 
       const authHTML = `
         <div class="flex items-center gap-3">
           <img src="${user.photoURL}" class="w-8 h-8 rounded-full border border-cyan-400">
-          ${isAdmin ? `<button onclick="openAdminModal()" class="bg-red-500/20 border border-red-500 text-red-400 text-xs px-3 py-1 rounded-lg cursor-pointer">Админка</button>` : ''}
+          ${isAdmin ? `
+            <button onclick="openAdminModal()" class="relative bg-red-500/20 border border-red-500 text-red-400 text-xs px-3 py-1.5 rounded-lg cursor-pointer flex items-center gap-1.5">
+              <span>Админка</span>
+              <span id="adminTopBadge" class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full hidden">0</span>
+            </button>
+          ` : ''}
           <button onclick="logoutGoogle()" class="text-xs text-gray-400 hover:text-white cursor-pointer">Выйти</button>
         </div>
       `;
       const container = document.getElementById('authContainer');
       if (container) container.innerHTML = authHTML;
+      updateAdminNotificationBadge();
     }
 
     function logoutGoogle() {
@@ -376,6 +383,30 @@
         window.currentUser = null;
         location.reload();
       });
+    }
+
+    function updateAdminNotificationBadge() {
+      const count = window.projectOrders.length;
+      const topBadge = document.getElementById('adminTopBadge');
+      const menuBadge = document.getElementById('adminOrdersBadge');
+
+      if (topBadge) {
+        if (count > 0) {
+          topBadge.innerText = count;
+          topBadge.classList.remove('hidden');
+        } else {
+          topBadge.classList.add('hidden');
+        }
+      }
+
+      if (menuBadge) {
+        if (count > 0) {
+          menuBadge.innerText = count;
+          menuBadge.classList.remove('hidden');
+        } else {
+          menuBadge.classList.add('hidden');
+        }
+      }
     }
 
     function submitProjectOrder() {
@@ -390,7 +421,7 @@
       const order = {
         id: Date.now(),
         userEmail: window.currentUser.email,
-        userName: window.currentUser.displayName,
+        userName: window.currentUser.displayName || "Клиент",
         title: type,
         price: price,
         date: new Date().toLocaleDateString(),
@@ -400,6 +431,7 @@
       window.projectOrders.push(order);
       saveData('orders', window.projectOrders);
       updateCartBadge();
+      updateAdminNotificationBadge();
       alert('Заявка успешно отправлена!');
     }
 
@@ -435,6 +467,7 @@
       window.projectOrders = window.projectOrders.filter(o => o.id !== id);
       saveData('orders', window.projectOrders);
       updateCartBadge();
+      updateAdminNotificationBadge();
       openClientCart();
     }
 
@@ -452,7 +485,7 @@
 
     function renderAdminAllOrders(container) {
       container.innerHTML = `
-        <h4 class="font-bold text-lg mb-4 text-cyan-400">Заявки и Блокировка (${window.projectOrders.length})</h4>
+        <h4 class="font-bold text-lg mb-4 text-cyan-400">Все заявки на сайте (${window.projectOrders.length})</h4>
         <div class="space-y-3 text-xs">
       `;
       if (window.projectOrders.length === 0) {
@@ -461,14 +494,14 @@
         window.projectOrders.forEach(ord => {
           const isBlocked = window.blockedUsers.includes(ord.userEmail);
           container.innerHTML += `
-            <div class="bg-gray-800/80 p-3 rounded-xl border border-gray-700 flex justify-between items-center">
+            <div class="bg-gray-800/80 p-3.5 rounded-xl border border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <span class="font-bold text-white">${ord.userName}</span> (${ord.userEmail})<br>
-                <span class="text-cyan-400">${ord.title}</span> — <b>${ord.price}</b>
+                <span class="font-bold text-white text-sm">${ord.userName}</span> <span class="text-gray-400">(${ord.userEmail})</span><br>
+                <span class="text-cyan-400 font-medium">${ord.title}</span> — <b class="text-green-400">${ord.price}</b> <span class="text-gray-500 text-[10px] ml-2">${ord.date}</span>
               </div>
-              <div class="flex gap-2">
-                <button onclick="adminDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">Удалить</button>
-                <button onclick="toggleBlockUser('${ord.userEmail}')" class="bg-orange-500/20 text-orange-400 px-2 py-1 rounded cursor-pointer">${isBlocked ? 'Разблокировать' : 'Блокировать'}</button>
+              <div class="flex gap-2 w-full sm:w-auto justify-end">
+                <button onclick="adminDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-3 py-1.5 rounded cursor-pointer">Удалить</button>
+                <button onclick="toggleBlockUser('${ord.userEmail}')" class="bg-orange-500/20 text-orange-400 px-3 py-1.5 rounded cursor-pointer">${isBlocked ? 'Разблокировать' : 'Блокировать'}</button>
               </div>
             </div>
           `;
@@ -482,6 +515,7 @@
       saveData('orders', window.projectOrders);
       renderAdminAllOrders(document.getElementById('adminContent'));
       updateCartBadge();
+      updateAdminNotificationBadge();
     }
 
     function toggleBlockUser(email) {
@@ -609,7 +643,12 @@
       }).catch(err => console.error(err));
     }
 
-    function openAdminModal() { document.getElementById('adminModal').classList.remove('hidden'); showAdminTab('allOrders'); }
+    function openAdminModal() { 
+      document.getElementById('adminModal').classList.remove('hidden'); 
+      showAdminTab('allOrders'); 
+      updateAdminNotificationBadge();
+    }
+    
     function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
 
     function showAdminTab(tab) {
@@ -832,6 +871,7 @@
     updateAllPricesOnSite();
     renderPortfolio();
     renderTeam();
+    updateAdminNotificationBadge();
 
     // 3D Canvas
     const scene = new THREE.Scene();
