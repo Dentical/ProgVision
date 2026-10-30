@@ -38,7 +38,6 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    // Автоматическое восстановление сессии при F5
     onAuthStateChanged(auth, (user) => {
       if (user) {
         if (typeof window.handleUserAuth === 'function') {
@@ -69,7 +68,6 @@
         <span class="text-2xl font-black tracking-wider gradient-text">ProgVision</span>
       </div>
 
-      <!-- Меню сайта (SPA переключение) -->
       <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
         <button onclick="switchPage('services')" class="hover:text-cyan-400 transition cursor-pointer">Услуги</button>
         <button onclick="switchPage('portfolio')" class="hover:text-cyan-400 transition cursor-pointer">Портфолио</button>
@@ -79,7 +77,6 @@
       </nav>
 
       <div class="flex items-center gap-3">
-        <!-- Валюты -->
         <select id="currencySelect" onchange="changeCurrency(this.value)" class="bg-gray-800 text-xs px-2 py-1 rounded border border-gray-700 text-green-400 cursor-pointer">
           <option value="USD">$ USD</option>
           <option value="TJS">сом TJS</option>
@@ -87,7 +84,6 @@
           <option value="EUR">€ EUR</option>
         </select>
 
-        <!-- Корзина Клиента -->
         <button onclick="openClientCart()" class="relative p-2 bg-gray-800/80 rounded-xl hover:bg-gray-700 transition text-cyan-400 cursor-pointer" title="Мои заявки">
           <i data-lucide="shopping-bag" class="w-5 h-5"></i>
           <span id="cartBadge" class="absolute -top-1 -right-1 bg-cyan-500 text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
@@ -105,7 +101,6 @@
       </div>
     </div>
 
-    <!-- Мобильное меню -->
     <div id="mobileMenu" class="hidden md:hidden glass border-t border-gray-800 px-4 py-4 space-y-3">
       <button onclick="switchPage('services'); toggleMobileMenu();" class="block w-full text-left text-sm text-gray-300 hover:text-cyan-400">Услуги</button>
       <button onclick="switchPage('portfolio'); toggleMobileMenu();" class="block w-full text-left text-sm text-gray-300 hover:text-cyan-400">Портфолио</button>
@@ -120,7 +115,7 @@
     </div>
   </header>
 
-  <!-- СТРАНИЦА 1: Главная (Hero) -->
+  <!-- СТРАНИЦА 1: Главная -->
   <section id="page-hero" class="page-section active relative pt-32 pb-20 min-h-screen flex items-center justify-center overflow-hidden">
     <div id="canvas3d" class="absolute inset-0 z-0 opacity-40 pointer-events-none"></div>
     <div class="relative z-10 max-w-4xl mx-auto text-center px-4">
@@ -197,7 +192,7 @@
     </div>
   </section>
 
-  <!-- СТРАНИЦА 5: Калькулятор -->
+  <!-- СТРАНИЦА 5: Калькулятор (с обязательным телефоном) -->
   <section id="page-calculator" class="page-section pt-32 pb-20 max-w-4xl mx-auto px-4 min-h-screen">
     <h2 class="text-3xl font-bold text-center mb-8">Калькулятор Стоимости Проекта</h2>
     <div class="glass p-6 sm:p-8 rounded-3xl space-y-6">
@@ -208,6 +203,10 @@
       <div>
         <label class="block text-sm font-semibold mb-2">Дополнительные опции:</label>
         <div id="calcOptionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm"></div>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-2">Номер телефона или Telegram для связи (Обязательно):</label>
+        <input type="text" id="orderPhone" placeholder="+992 900 00 00 00 или @username" class="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl text-sm outline-none text-white">
       </div>
       <div class="pt-2">
         <label class="block text-sm font-semibold mb-2">Промокод:</label>
@@ -295,7 +294,6 @@
   <script>
     lucide.createIcons();
 
-    // Переключение страниц (SPA)
     function switchPage(pageId) {
       document.querySelectorAll('.page-section').forEach(el => {
         el.classList.remove('active');
@@ -349,7 +347,6 @@
       return window.adminList.includes(email) || email === window.superAdminEmail;
     }
 
-    // Авторизация и сохранение при F5
     window.handleUserAuth = function(user) {
       const isAdmin = checkIsAdmin(user.email);
 
@@ -386,6 +383,7 @@
     }
 
     function updateAdminNotificationBadge() {
+      window.projectOrders = loadData('orders', []);
       const count = window.projectOrders.length;
       const topBadge = document.getElementById('adminTopBadge');
       const menuBadge = document.getElementById('adminOrdersBadge');
@@ -411,10 +409,18 @@
 
     function submitProjectOrder() {
       if (!window.currentUser) {
-        alert('Пожалуйста, войдите через Google, чтобы отправить заявку!');
+        alert('Пожалуйста, войдите через Google (Gmail), чтобы отправить заявку!');
         loginGoogle();
         return;
       }
+
+      const phoneInput = document.getElementById('orderPhone').value.trim();
+      if (!phoneInput) {
+        alert('Пожалуйста, укажите ваш номер телефона или Telegram для связи!');
+        document.getElementById('orderPhone').focus();
+        return;
+      }
+
       const type = document.getElementById('calcType').selectedOptions[0].text;
       const price = document.getElementById('totalPrice').innerText;
       
@@ -422,6 +428,7 @@
         id: Date.now(),
         userEmail: window.currentUser.email,
         userName: window.currentUser.displayName || "Клиент",
+        phone: phoneInput,
         title: type,
         price: price,
         date: new Date().toLocaleDateString(),
@@ -432,7 +439,8 @@
       saveData('orders', window.projectOrders);
       updateCartBadge();
       updateAdminNotificationBadge();
-      alert('Заявка успешно отправлена!');
+      document.getElementById('orderPhone').value = '';
+      alert('Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.');
     }
 
     function openClientCart() {
@@ -443,6 +451,7 @@
       }
       const modal = document.getElementById('clientCartModal');
       const content = document.getElementById('clientCartContent');
+      window.projectOrders = loadData('orders', []);
       const userOrders = window.projectOrders.filter(o => o.userEmail === window.currentUser.email);
 
       if (userOrders.length === 0) {
@@ -452,7 +461,7 @@
           <div class="bg-gray-800/80 p-3 rounded-xl border border-gray-700 flex justify-between items-center text-xs">
             <div>
               <span class="font-bold text-cyan-400">${ord.title}</span>
-              <div class="text-gray-400">Стоимость: ${ord.price}</div>
+              <div class="text-gray-400">Связь: ${ord.phone} | Стоимость: ${ord.price}</div>
             </div>
             <button onclick="clientDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">Удалить</button>
           </div>
@@ -473,6 +482,7 @@
 
     function updateCartBadge() {
       if (!window.currentUser) return;
+      window.projectOrders = loadData('orders', []);
       const userOrders = window.projectOrders.filter(o => o.userEmail === window.currentUser.email);
       const badge = document.getElementById('cartBadge');
       if (userOrders.length > 0) {
@@ -484,6 +494,7 @@
     }
 
     function renderAdminAllOrders(container) {
+      window.projectOrders = loadData('orders', []);
       container.innerHTML = `
         <h4 class="font-bold text-lg mb-4 text-cyan-400">Все заявки на сайте (${window.projectOrders.length})</h4>
         <div class="space-y-3 text-xs">
@@ -496,8 +507,9 @@
           container.innerHTML += `
             <div class="bg-gray-800/80 p-3.5 rounded-xl border border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <span class="font-bold text-white text-sm">${ord.userName}</span> <span class="text-gray-400">(${ord.userEmail})</span><br>
-                <span class="text-cyan-400 font-medium">${ord.title}</span> — <b class="text-green-400">${ord.price}</b> <span class="text-gray-500 text-[10px] ml-2">${ord.date}</span>
+                <span class="font-bold text-white text-sm">${ord.userName}</span> <span class="text-cyan-400">(${ord.userEmail})</span><br>
+                <span class="text-yellow-400 font-semibold">Телефон/Telegram: ${ord.phone || 'Не указан'}</span><br>
+                <span class="text-gray-300 font-medium">${ord.title}</span> — <b class="text-green-400">${ord.price}</b> <span class="text-gray-500 text-[10px] ml-2">${ord.date}</span>
               </div>
               <div class="flex gap-2 w-full sm:w-auto justify-end">
                 <button onclick="adminDeleteOrder(${ord.id})" class="bg-red-500/20 text-red-400 px-3 py-1.5 rounded cursor-pointer">Удалить</button>
