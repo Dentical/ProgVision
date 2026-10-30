@@ -333,7 +333,7 @@
     window.activeDiscount = null;
 
     window.portfolioData = loadData('portfolio', [
-      { title: "Osori15 Platform", category: "Веб-сервис", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80", desc: "Масштабная онлайн-платформа с системой авторизации.", link: "#" }
+      { title: "Osori15 Platform", category: "Веб-сервис", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80", desc: "Масштабная онлайн-платформа с системой авторизации.", link: "https://example.com" }
     ]);
 
     window.teamData = loadData('team', [
@@ -611,16 +611,22 @@
     }
 
     function renderPortfolio() {
+      window.portfolioData = loadData('portfolio', window.portfolioData);
       const grid = document.getElementById('portfolioGrid');
       grid.innerHTML = window.portfolioData.map((item, index) => `
-        <div class="glass rounded-2xl overflow-hidden border border-gray-800 hover:border-cyan-500/50 transition group relative">
-          <div class="h-48 overflow-hidden relative">
-            <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-            <span class="absolute top-3 left-3 bg-cyan-950/80 text-cyan-400 text-xs px-3 py-1 rounded-full border border-cyan-800">${item.category}</span>
+        <div class="glass rounded-2xl overflow-hidden border border-gray-800 hover:border-cyan-500/50 transition group relative flex flex-col justify-between">
+          <div>
+            <div class="h-48 overflow-hidden relative">
+              <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <span class="absolute top-3 left-3 bg-cyan-950/80 text-cyan-400 text-xs px-3 py-1 rounded-full border border-cyan-800">${item.category || 'Web'}</span>
+            </div>
+            <div class="p-6">
+              <h3 class="text-xl font-bold mb-2">${item.title}</h3>
+              <p class="text-gray-400 text-sm mb-4">${item.desc}</p>
+            </div>
           </div>
-          <div class="p-6">
-            <h3 class="text-xl font-bold mb-2">${item.title}</h3>
-            <p class="text-gray-400 text-sm">${item.desc}</p>
+          <div class="px-6 pb-6">
+            ${item.link && item.link !== '#' ? `<a href="${item.link}" target="_blank" class="inline-block w-full text-center bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500 hover:text-black font-bold py-2.5 rounded-xl transition text-sm">Посмотреть сайт</a>` : ''}
           </div>
         </div>
       `).join('');
@@ -757,15 +763,22 @@
       } else if (tab === 'portfolio') {
         content.innerHTML = `
           <h4 class="font-bold text-lg mb-4 text-cyan-400">Управление Портфолио</h4>
-          <input type="text" id="pTitle" placeholder="Название проекта" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
-          <input type="text" id="pImg" placeholder="URL фото" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs">
-          <textarea id="pDesc" placeholder="Описание" class="bg-gray-800 p-2 rounded w-full mb-2 text-white text-xs"></textarea>
-          <button onclick="addPortfolio()" class="bg-cyan-500 text-black px-4 py-2 rounded font-bold text-xs cursor-pointer mb-6">Добавить проект</button>
+          <div class="space-y-3 text-xs mb-6">
+            <input type="text" id="pTitle" placeholder="Название проекта *" class="bg-gray-800 p-2 rounded w-full text-white">
+            <input type="text" id="pCategory" placeholder="Категория (например: Веб-сервис, E-Commerce)" class="bg-gray-800 p-2 rounded w-full text-white">
+            <input type="url" id="pLink" placeholder="URL сайта (например: https://mysite.com)" class="bg-gray-800 p-2 rounded w-full text-white">
+            <div>
+              <label class="text-gray-400 block mb-1">Загрузить фото проекта с устройства:</label>
+              <input type="file" id="pImgFile" accept="image/*" class="bg-gray-800 p-2 rounded w-full text-white cursor-pointer">
+            </div>
+            <textarea id="pDesc" placeholder="Описание проекта..." class="bg-gray-800 p-2 rounded w-full text-white"></textarea>
+            <button onclick="addPortfolioWithImage()" class="bg-cyan-500 text-black px-4 py-2.5 rounded font-bold w-full cursor-pointer">Добавить проект в портфолио</button>
+          </div>
           <h5 class="font-bold text-sm mb-2 text-gray-300">Существующие проекты:</h5>
           <div class="space-y-2 text-xs">
             ${window.portfolioData.map((item, idx) => `
               <div class="bg-gray-800/80 p-2.5 rounded-xl flex justify-between items-center">
-                <span>${item.title}</span>
+                <span><b>${item.title}</b> (${item.category || 'Web'})</span>
                 <button onclick="deletePortfolio(${idx})" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">Удалить</button>
               </div>
             `).join('')}
@@ -848,16 +861,37 @@
       alert('Все цены успешно сохранены и обновлены на сайте!');
     }
 
-    function addPortfolio() {
-      const title = document.getElementById('pTitle').value;
-      const img = document.getElementById('pImg').value;
-      const desc = document.getElementById('pDesc').value;
-      if (title) {
-        window.portfolioData.push({ title, category: "Web", img: img || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80", desc, link: "#" });
+    function addPortfolioWithImage() {
+      const title = document.getElementById('pTitle').value.trim();
+      const category = document.getElementById('pCategory').value.trim() || "Веб-разработка";
+      const link = document.getElementById('pLink').value.trim() || "#";
+      const desc = document.getElementById('pDesc').value.trim();
+      const fileInput = document.getElementById('pImgFile');
+
+      if (!title) {
+        alert('Пожалуйста, введите название проекта!');
+        return;
+      }
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imgBase64 = e.target.result;
+          window.portfolioData.push({ title, category, img: imgBase64, desc, link });
+          saveData('portfolio', window.portfolioData);
+          renderPortfolio();
+          showAdminTab('portfolio');
+          alert('Проект с изображением успешно добавлен в портфолио!');
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        // Дефолтное фото, если файл не выбран
+        const defaultImg = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80";
+        window.portfolioData.push({ title, category, img: defaultImg, desc, link });
         saveData('portfolio', window.portfolioData);
         renderPortfolio();
         showAdminTab('portfolio');
-        alert('Проект добавлен!');
+        alert('Проект успешно добавлен в портфолио!');
       }
     }
 
